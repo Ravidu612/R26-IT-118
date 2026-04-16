@@ -3,11 +3,16 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
 const weatherRoutes = require('./routes/weather');
+const { fetchAndSaveWeather } = require('./services/weatherService');
 
 dotenv.config();
 const app = express();
 
 connectDB();
+
+// Fetch weather immediately on startup, then every 5 minutes
+fetchAndSaveWeather();
+setInterval(fetchAndSaveWeather, 5 * 60 * 1000);
 
 app.use(cors());
 app.use(express.json());
