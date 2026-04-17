@@ -3,23 +3,21 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from "recharts";
-import { getWeatherData } from "../services/api";
+import { getWeatherData, getWeatherForecast, getWeatherHistory } from "../services/api";
 import { calcBlisterBlightRisk, calcRedSpiderMiteRisk, riskLabel } from "../utils/diseaseRisk";
-
-const FORECAST_MOCK = [
-  { day: "Today", icon: "⛅", high: 19, low: 13, rain: 4.2 },
-  { day: "Fri",   icon: "🌦", high: 17, low: 12, rain: 6.1 },
-  { day: "Sat",   icon: "🌧", high: 16, low: 11, rain: 11 },
-  { day: "Sun",   icon: "🌥", high: 18, low: 12, rain: 2.0 },
-  { day: "Mon",   icon: "⛅", high: 20, low: 13, rain: 1.2 },
-  { day: "Tue",   icon: "☀️", high: 22, low: 14, rain: 0 },
-  { day: "Wed",   icon: "🌤", high: 21, low: 13, rain: 0.5 },
-];
 
 const RISK_COLOR = {
   red:    { bar: "bg-red-400",    badge: "bg-red-100 text-red-800" },
   yellow: { bar: "bg-yellow-400", badge: "bg-yellow-100 text-yellow-800" },
   green:  { bar: "bg-green-500",  badge: "bg-green-100 text-green-800" },
+};
+
+const getWeatherEmoji = (weatherMain) => {
+  const map = {
+    Clear: "☀️", Clouds: "⛅", Rain: "🌧", Drizzle: "🌦",
+    Thunderstorm: "⛈", Snow: "❄️", Mist: "🌫", Fog: "🌫",
+  };
+  return map[weatherMain] || "🌤";
 };
 
 function DiseaseGauge({ name, score }) {
@@ -42,13 +40,15 @@ function DiseaseGauge({ name, score }) {
 
 export default function Dashboard() {
   const [readings, setReadings] = useState([]);
+  const [forecast, setForecast] = useState([]);
+  const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState(0);
 
+  // Fetch live weather readings
   useEffect(() => {
     getWeatherData()
       .then((res) => {
-        // Get latest reading per region (last 3 unique locations)
         const data = res.data.data;
         const regionMap = {};
         data.forEach((r) => {
@@ -64,18 +64,43 @@ export default function Dashboard() {
       });
   }, []);
 
-  // Build a fake 24h trend from today's temp ± noise (replace with real history later)
-  const trendData = readings[selectedRegion]
-    ? Array.from({ length: 9 }, (_, i) => {
-        const base = readings[selectedRegion].temperature?.current ?? 20;
-        const hour = i * 3;
-        const offset = Math.sin((hour / 24) * Math.PI * 2) * 3;
-        return {
-          time: `${String(hour).padStart(2, "0")}:00`,
-          temp: +(base + offset - 1).toFixed(1),
-        };
-      })
-    : [];
+  // Fetch forecast when selected region changes
+  useEffect(() => {
+    if (readings.length === 0) return;
+    const regionName = readings[selectedRegion]?.location?.name;
+    if (!regionName) return;
+
+    setForecast([]);
+    getWeatherForecast(regionName)
+      .then((res) => setForecast(res.data.data))
+      .catch((err) => console.error('Forecast error:', err));
+  }, [selectedRegion, readings]);
+
+  // Fetch 24h history when selected region changes
+  useEffect(() => {
+    if (readings.length === 0) return;
+    const regionName = readings[selectedRegion]?.location?.name;
+    if (!regionName) return;
+
+    getWeatherHistory(regionName)
+      .then((res) => setHistoryData(res.data.data))
+      .catch((err) => console.error('History error:', err));
+  }, [selectedRegion, readings]);
+
+  // Use real history if available, otherwise fall back to sinusoidal estimate
+  const trendData = historyData.length > 0
+    ? historyData
+    : readings[selectedRegion]
+      ? Array.from({ length: 9 }, (_, i) => {
+          const base = readings[selectedRegion].temperature?.current ?? 20;
+          const hour = i * 3;
+          const offset = Math.sin((hour / 24) * Math.PI * 2) * 3;
+          return {
+            time: `${String(hour).padStart(2, "0")}:00`,
+            temp: +(base + offset - 1).toFixed(1),
+          };
+        })
+      : [];
 
   if (loading) {
     return (
@@ -90,6 +115,7 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-medium text-green-900">Sri Lanka Tea Estate Monitor</h1>
@@ -122,9 +148,9 @@ export default function Dashboard() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               {[
-                ["Humidity", `${r.humidity}%`],
-                ["Rainfall", `${r.rainfall}mm`],
-                ["Wind", `${r.windSpeed} m/s`],
+                ["Humidity",   `${r.humidity}%`],
+                ["Rainfall",   `${r.rainfall}mm`],
+                ["Wind",       `${r.windSpeed} m/s`],
                 ["Feels like", `${r.temperature?.feelsLike ?? "—"}°C`],
               ].map(([label, val]) => (
                 <div key={label} className="bg-green-50 rounded-lg p-2">
@@ -139,6 +165,7 @@ export default function Dashboard() {
 
       {/* Disease Risk + Trend Chart */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+
         {/* Disease Risk */}
         <div className="bg-white rounded-xl border border-green-100 p-5">
           <p className="text-xs font-medium tracking-widest text-green-500 uppercase mb-4">
@@ -146,7 +173,7 @@ export default function Dashboard() {
           </p>
           <div className="flex flex-col gap-5">
             {readings.map((r) => {
-              const bb = calcBlisterBlightRisk(r.humidity, r.temperature?.current);
+              const bb  = calcBlisterBlightRisk(r.humidity, r.temperature?.current);
               const rsm = calcRedSpiderMiteRisk(r.humidity, r.temperature?.current, r.rainfall);
               return (
                 <div key={r.location?.name} className="flex flex-col gap-3">
@@ -168,6 +195,11 @@ export default function Dashboard() {
           </p>
           <p className="text-sm text-green-700 font-medium mb-4">
             {readings[selectedRegion]?.location?.name}
+            {historyData.length > 0 && (
+              <span className="text-xs text-green-400 font-normal ml-2">
+                · {historyData.length} real readings
+              </span>
+            )}
           </p>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={trendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
@@ -202,7 +234,9 @@ export default function Dashboard() {
             </LineChart>
           </ResponsiveContainer>
           <p className="text-xs text-green-400 mt-2">
-            Click a region card above to switch the chart
+            {historyData.length > 0
+              ? "Showing real historical data from MongoDB"
+              : "Estimated trend — real data builds up every 5 minutes"}
           </p>
         </div>
       </div>
@@ -212,31 +246,39 @@ export default function Dashboard() {
         <p className="text-xs font-medium tracking-widest text-green-500 uppercase mb-4">
           7-Day Outlook — {readings[selectedRegion]?.location?.name}
         </p>
-        <div className="grid grid-cols-7 gap-2">
-          {FORECAST_MOCK.map((d, i) => (
-            <div
-              key={i}
-              className={`rounded-xl p-3 text-center border ${
-                i === 0
-                  ? "bg-blue-50 border-blue-200"
-                  : "bg-green-50 border-green-100"
-              }`}
-            >
-              <div className={`text-xs font-medium ${i === 0 ? "text-blue-600" : "text-green-500"}`}>
-                {d.day}
+        {forecast.length === 0 ? (
+          <div className="flex items-center gap-2 text-green-400">
+            <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm">Loading forecast...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-7 gap-2">
+            {forecast.map((d, i) => (
+              <div
+                key={i}
+                className={`rounded-xl p-3 text-center border ${
+                  i === 0
+                    ? "bg-blue-50 border-blue-200"
+                    : "bg-green-50 border-green-100"
+                }`}
+              >
+                <div className={`text-xs font-medium ${i === 0 ? "text-blue-600" : "text-green-500"}`}>
+                  {d.day}
+                </div>
+                <div className="text-xl my-1.5">{getWeatherEmoji(d.weatherMain)}</div>
+                <div className={`text-sm font-medium ${i === 0 ? "text-blue-700" : "text-green-800"}`}>
+                  {d.high}°
+                </div>
+                <div className="text-xs text-green-500">{d.low}°</div>
+                {d.rain > 0 && (
+                  <div className="text-xs text-sky-500 mt-1">{d.rain}mm</div>
+                )}
               </div>
-              <div className="text-xl my-1.5">{d.icon}</div>
-              <div className={`text-sm font-medium ${i === 0 ? "text-blue-700" : "text-green-800"}`}>
-                {d.high}°
-              </div>
-              <div className="text-xs text-green-500">{d.low}°</div>
-              {d.rain > 0 && (
-                <div className="text-xs text-sky-500 mt-1">{d.rain}mm</div>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
+
     </div>
   );
 }
