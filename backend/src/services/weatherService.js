@@ -1,10 +1,11 @@
 const axios = require('axios');
 const WeatherReading = require('../models/WeatherReading');
+const { checkAndCreateAlerts } = require('./alertService');
 
 const TEA_REGIONS = [
   { name: 'Nuwara Eliya', latitude: 6.9497, longitude: 80.7891 },
-  { name: 'Kandy', latitude: 7.2906, longitude: 80.6337 },
-  { name: 'Ratnapura', latitude: 6.6828, longitude: 80.3992 }
+  { name: 'Kandy',        latitude: 7.2906, longitude: 80.6337 },
+  { name: 'Ratnapura',    latitude: 6.6828, longitude: 80.3992 }
 ];
 
 const fetchAndSaveWeather = async () => {
@@ -26,7 +27,7 @@ const fetchAndSaveWeather = async () => {
           min: data.main.temp_min,
           max: data.main.temp_max,
           current: data.main.temp,
-          feelsLike: data.main.feels_like,   // ← ADDED
+          feelsLike: data.main.feels_like,
         },
         humidity: data.main.humidity,
         rainfall: data.rain ? data.rain['1h'] || 0 : 0,
@@ -37,6 +38,9 @@ const fetchAndSaveWeather = async () => {
 
       await reading.save();
       console.log(`Weather saved for ${region.name}`);
+
+      // Check disease risk and create alerts if thresholds crossed
+      await checkAndCreateAlerts(reading);
 
     } catch (error) {
       console.error(`Failed to fetch weather for ${region.name}:`, error.message);
