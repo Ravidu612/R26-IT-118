@@ -25,7 +25,8 @@ const fetchAndSaveWeather = async () => {
         temperature: {
           min: data.main.temp_min,
           max: data.main.temp_max,
-          current: data.main.temp
+          current: data.main.temp,
+          feelsLike: data.main.feels_like,   // ← ADDED
         },
         humidity: data.main.humidity,
         rainfall: data.rain ? data.rain['1h'] || 0 : 0,

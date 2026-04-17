@@ -5,6 +5,8 @@ const API = axios.create({
 });
 
 export const getWeatherData = () => API.get('/api/weather');
-export const getWeatherByLocation = (location) => API.get(`/api/weather/${location}`);
+export const getWeatherByLocation = (location) => API.get(`/api/weather/${encodeURIComponent(location)}`);
+export const getWeatherForecast = (location) => API.get(`/api/weather/forecast/${encodeURIComponent(location)}`);
+export const getWeatherHistory = (location) => API.get(`/api/weather/history/${encodeURIComponent(location)}`);
 
 export default API;

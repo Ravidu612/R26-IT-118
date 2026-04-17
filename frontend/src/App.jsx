@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
+import Forecasts from "./pages/Forecasts";
+import DiseaseRisk from "./pages/DiseaseRisk";
+import Reports from "./pages/Reports";
 
 export default function App() {
   return (
@@ -9,6 +12,9 @@ export default function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/forecasts" element={<Forecasts />} />
+          <Route path="/disease-risk" element={<DiseaseRisk />} />
+          <Route path="/reports" element={<Reports />} />
         </Routes>
       </div>
     </BrowserRouter>
