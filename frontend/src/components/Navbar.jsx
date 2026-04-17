@@ -8,13 +8,13 @@ const links = [
   { to: "/disease-risk", label: "Disease Risk" },
   { to: "/reports", label: "Reports" },
   { to: "/alerts", label: "Alerts" },
+  { to: "/predictions", label: "Predictions" },
 ];
 
 export default function Navbar() {
   const { pathname } = useLocation();
   const [alertCount, setAlertCount] = useState(0);
 
-  // Poll alert count every 60 seconds
   useEffect(() => {
     const fetchCount = () => {
       API.get('/api/alerts/count')
@@ -44,7 +44,6 @@ export default function Navbar() {
             }`}
           >
             {l.label}
-            {/* Badge — only on Alerts link */}
             {l.to === "/alerts" && alertCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
                 {alertCount > 9 ? "9+" : alertCount}

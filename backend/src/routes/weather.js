@@ -81,6 +81,23 @@ router.get('/history/:location', async (req, res) => {
   }
 });
 
+// GET ML predictions proxy — must be before /:location
+router.get('/predict/:location', async (req, res) => {
+  try {
+    const { location } = req.params;
+    const response = await axios.get(
+      `http://localhost:5001/predict/${encodeURIComponent(location)}`
+    );
+    res.json(response.data);
+  } catch (error) {
+    const status = error.response?.status || 503;
+    res.status(status).json({
+      success: false,
+      message: error.response?.data?.message || 'ML service unavailable'
+    });
+  }
+});
+
 // GET weather by location
 router.get('/:location', async (req, res) => {
   try {

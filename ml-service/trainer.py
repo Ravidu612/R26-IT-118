@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from database import get_db
-from model_store import set_model
+import model_store  # ← import the module, not individual functions
 
 REGIONS = ['Nuwara Eliya', 'Kandy', 'Ratnapura']
 
@@ -120,29 +120,35 @@ def train_all():
             if len(df) < 10:
                 continue
 
+            now = datetime.now(timezone.utc)
+
             # ── Disease Risk Model (Random Forest) ──────────────────────────
-            # Features: current conditions → predict next reading's risk
+            # Features: [temp, humidity, rainfall, hour]
             X_risk = df[['temp', 'humidity', 'rainfall', 'hour']].values[:-1]
-            y_risk = df['disease_risk'].values[1:]  # next reading's risk
+            y_risk = df['disease_risk'].values[1:]
 
             scaler_risk = StandardScaler()
             X_risk_scaled = scaler_risk.fit_transform(X_risk)
 
             rf_model = RandomForestRegressor(n_estimators=50, random_state=42)
             rf_model.fit(X_risk_scaled, y_risk)
-            set_model('disease_risk', region, rf_model, scaler_risk, datetime.now(timezone.utc))
+
+            model_store.set_disease_model(region, rf_model, scaler_risk, now)
+            model_store.set_samples(region, len(df))
             print(f"  ✓ Disease risk model trained for {region} ({len(df)} samples)")
 
             # ── Temperature Model (Linear Regression) ───────────────────────
+            # Features: [humidity, rainfall, hour]
             X_temp = df[['humidity', 'rainfall', 'hour']].values[:-1]
-            y_temp = df['temp'].values[1:]  # next reading's temperature
+            y_temp = df['temp'].values[1:]
 
             scaler_temp = StandardScaler()
             X_temp_scaled = scaler_temp.fit_transform(X_temp)
 
             lr_model = LinearRegression()
             lr_model.fit(X_temp_scaled, y_temp)
-            set_model('temperature', region, lr_model, scaler_temp, datetime.now(timezone.utc))
+
+            model_store.set_temp_model(region, lr_model, scaler_temp, now)
             print(f"  ✓ Temperature model trained for {region}")
 
         except Exception as e:
