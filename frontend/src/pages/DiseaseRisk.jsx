@@ -4,11 +4,7 @@ import {
   Tooltip, ResponsiveContainer,
 } from "recharts";
 import { getWeatherData, getWeatherHistory } from "../services/api";
-import {
-  calcBlisterBlightRisk,
-  calcRedSpiderMiteRisk,
-  riskLabel,
-} from "../utils/diseaseRisk";
+import { DISEASES, riskLabel } from "../utils/diseaseRisk";
 
 const REGIONS = ["Nuwara Eliya", "Kandy", "Ratnapura"];
 
@@ -18,15 +14,13 @@ const RISK_COLOR = {
   green:  { bar: "bg-green-500",  badge: "bg-green-100 text-green-700",  text: "text-green-600" },
 };
 
-const RISK_INFO = {
-  "Blister Blight": {
-    description: "Fungal disease favored by high humidity (>80%) and cool temperatures (15–25°C). Common in high-altitude estates.",
-    conditions: ["Humidity > 80%", "Temperature 15–25°C", "Misty / cloudy weather"],
-  },
-  "Red Spider Mite": {
-    description: "Pest thriving in hot, dry conditions. Damages tea leaves by sucking cell sap, causing bronzing.",
-    conditions: ["Temperature > 28°C", "Humidity < 60%", "Low or no rainfall"],
-  },
+const DISEASE_COLORS = {
+  blisterBlight:  "#ef4444",
+  redSpiderMite:  "#f59e0b",
+  brownBlight:    "#8b5cf6",
+  greyBlight:     "#6b7280",
+  shotHoleBorer:  "#f97316",
+  algalLeafSpot:  "#06b6d4",
 };
 
 function RiskGauge({ name, score }) {
@@ -60,11 +54,11 @@ export default function DiseaseRisk() {
   const [histories, setHistories] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState("Nuwara Eliya");
+  const [selectedDisease, setSelectedDisease] = useState(null);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        // Fetch latest readings
         const wRes = await getWeatherData();
         const data = wRes.data.data;
         const regionMap = {};
@@ -74,7 +68,6 @@ export default function DiseaseRisk() {
         });
         setReadings(regionMap);
 
-        // Fetch 24h history for all regions
         const historyResults = {};
         await Promise.all(
           REGIONS.map(async region => {
@@ -107,12 +100,19 @@ export default function DiseaseRisk() {
     );
   }
 
-  // Build risk trend from history for selected region
-  const riskTrend = (histories[selectedRegion] || []).map(point => ({
-    time: point.time,
-    "Blister Blight": calcBlisterBlightRisk(point.humidity ?? 80, point.temp),
-    "Red Spider Mite": calcRedSpiderMiteRisk(point.humidity ?? 80, point.temp, point.rainfall ?? 0),
-  }));
+  // Build risk trend for all 6 diseases from history
+  const riskTrend = (histories[selectedRegion] || []).map(point => {
+    const fakeReading = {
+      humidity: point.humidity ?? 80,
+      temperature: { current: point.temp },
+      rainfall: point.rainfall ?? 0,
+    };
+    const entry = { time: point.time };
+    DISEASES.forEach(d => {
+      entry[d.name] = d.calc(fakeReading);
+    });
+    return entry;
+  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -121,7 +121,7 @@ export default function DiseaseRisk() {
       <div className="mb-6">
         <h1 className="text-2xl font-medium text-green-900">Disease Risk Analysis</h1>
         <p className="text-sm text-green-600 mt-0.5">
-          Real-time disease risk index for Sri Lankan tea estates
+          Real-time disease risk index for Sri Lankan tea estates — 6 diseases tracked
         </p>
       </div>
 
@@ -133,10 +133,10 @@ export default function DiseaseRisk() {
         {REGIONS.map(region => {
           const r = readings[region];
           if (!r) return null;
-          const bb  = calcBlisterBlightRisk(r.humidity, r.temperature?.current);
-          const rsm = calcRedSpiderMiteRisk(r.humidity, r.temperature?.current, r.rainfall);
-          const bbRisk  = riskLabel(bb);
-          const rsmRisk = riskLabel(rsm);
+          const scores = DISEASES.map(d => ({ name: d.name, score: d.calc(r) }));
+          const highest = scores.reduce((a, b) => a.score > b.score ? a : b);
+          const highestRisk = riskLabel(highest.score);
+
           return (
             <button
               key={region}
@@ -147,58 +147,73 @@ export default function DiseaseRisk() {
                   : "border-green-100 hover:border-green-300"
               }`}
             >
-              <div className="text-sm font-medium text-green-800 mb-1">{region}</div>
+              <div className="flex justify-between items-start mb-1">
+                <div className="text-sm font-medium text-green-800">{region}</div>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${RISK_COLOR[highestRisk.color].badge}`}>
+                  {highestRisk.label}
+                </span>
+              </div>
               <div className="text-xs text-green-500 mb-4">
                 {r.temperature?.current}°C · {r.humidity}% humidity · {r.rainfall}mm rain
               </div>
               <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-green-600">Blister Blight</span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${RISK_COLOR[bbRisk.color].badge}`}>
-                    {bbRisk.label}
-                  </span>
-                </div>
-                <div className="h-1.5 bg-green-50 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${RISK_COLOR[bbRisk.color].bar}`} style={{ width: `${bb}%` }} />
-                </div>
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs text-green-600">Red Spider Mite</span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${RISK_COLOR[rsmRisk.color].badge}`}>
-                    {rsmRisk.label}
-                  </span>
-                </div>
-                <div className="h-1.5 bg-green-50 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${RISK_COLOR[rsmRisk.color].bar}`} style={{ width: `${rsm}%` }} />
-                </div>
+                {scores.map(({ name, score }) => {
+                  const risk = riskLabel(score);
+                  return (
+                    <div key={name}>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs text-green-600">{name}</span>
+                        <span className="text-xs text-green-500">{score}</span>
+                      </div>
+                      <div className="h-1.5 bg-green-50 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${RISK_COLOR[risk.color].bar}`}
+                          style={{ width: `${score}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </button>
           );
         })}
       </div>
 
-      {/* Detailed View for Selected Region */}
+      {/* Detailed Analysis — 6 disease cards */}
       <p className="text-xs font-medium tracking-widest text-green-500 uppercase mb-3">
         Detailed Analysis — {selectedRegion}
       </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {Object.entries(RISK_INFO).map(([disease, info]) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        {DISEASES.map(disease => {
           const r = readings[selectedRegion];
-          const score = disease === "Blister Blight"
-            ? calcBlisterBlightRisk(r?.humidity, r?.temperature?.current)
-            : calcRedSpiderMiteRisk(r?.humidity, r?.temperature?.current, r?.rainfall);
+          const score = r ? disease.calc(r) : 0;
           return (
-            <div key={disease} className="bg-white rounded-xl border border-green-100 p-5">
-              <RiskGauge name={disease} score={score} />
-              <p className="text-xs text-green-600 mt-4 mb-3">{info.description}</p>
-              <p className="text-xs font-medium text-green-700 mb-2">Risk conditions:</p>
-              <ul className="flex flex-col gap-1">
-                {info.conditions.map(c => (
-                  <li key={c} className="text-xs text-green-500 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
-                    {c}
-                  </li>
-                ))}
-              </ul>
+            <div
+              key={disease.key}
+              onClick={() => setSelectedDisease(selectedDisease?.key === disease.key ? null : disease)}
+              className="bg-white rounded-xl border border-green-100 p-5 cursor-pointer hover:border-green-300 transition-all"
+            >
+              <RiskGauge name={disease.name} score={score} />
+              <p className="text-xs text-green-600 mt-3 mb-2">{disease.description}</p>
+              <div
+                className={`overflow-hidden transition-all duration-300 ${
+                  selectedDisease?.key === disease.key ? "max-h-40" : "max-h-0"
+                }`}
+              >
+                <p className="text-xs font-medium text-green-700 mb-2">Risk conditions:</p>
+                <ul className="flex flex-col gap-1">
+                  {disease.conditions.map(c => (
+                    <li key={c} className="text-xs text-green-500 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <p className="text-xs text-green-400 mt-2">
+                {selectedDisease?.key === disease.key ? "▲ Hide conditions" : "▼ Show conditions"}
+              </p>
             </div>
           );
         })}
@@ -215,7 +230,7 @@ export default function DiseaseRisk() {
         {riskTrend.length === 0 ? (
           <p className="text-sm text-green-400">No historical data yet — check back in a few minutes.</p>
         ) : (
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={280}>
             <LineChart data={riskTrend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0fdf4" />
               <XAxis
@@ -239,34 +254,27 @@ export default function DiseaseRisk() {
                   fontSize: 12,
                 }}
               />
-              <Line
-                type="monotone"
-                dataKey="Blister Blight"
-                stroke="#ef4444"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="Red Spider Mite"
-                stroke="#f59e0b"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
+              {DISEASES.map(d => (
+                <Line
+                  key={d.key}
+                  type="monotone"
+                  dataKey={d.name}
+                  stroke={DISEASE_COLORS[d.key]}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         )}
-        <div className="flex gap-4 mt-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 bg-red-400 rounded" />
-            <span className="text-xs text-green-500">Blister Blight</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 bg-yellow-400 rounded" />
-            <span className="text-xs text-green-500">Red Spider Mite</span>
-          </div>
+        <div className="flex flex-wrap gap-4 mt-3">
+          {DISEASES.map(d => (
+            <div key={d.key} className="flex items-center gap-1.5">
+              <div className="w-3 h-0.5 rounded" style={{ backgroundColor: DISEASE_COLORS[d.key] }} />
+              <span className="text-xs text-green-500">{d.name}</span>
+            </div>
+          ))}
         </div>
       </div>
 
