@@ -65,7 +65,7 @@ The proposed system includes:
 
 # 👥 Group Members
 
-| Name | Student ID | Contribution |
+| Name | Student ID |
 |---|---|---|
 | Ravidu Miuranga | IT22209320 
 | Member 2 | IT22267986
