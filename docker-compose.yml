@@ -1,0 +1,84 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: teaguard-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - teaguard_mongo_data:/data/db
+    networks:
+      - teaguard_net
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: Backend/auth-service/Dockerfile
+    container_name: teaguard-auth-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PORT=${AUTH_SERVICE_PORT:-5001}
+    depends_on:
+      - mongodb
+    networks:
+      - teaguard_net
+
+  model-service:
+    build:
+      context: .
+      dockerfile: Backend/model-service/Dockerfile
+    container_name: teaguard-model-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PORT=${MODEL_SERVICE_PORT:-5002}
+    depends_on:
+      - mongodb
+    networks:
+      - teaguard_net
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Backend/api-gateway/Dockerfile
+    container_name: teaguard-api-gateway
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PORT=${API_GATEWAY_PORT:-5000}
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - MODEL_SERVICE_URL=http://model-service:5002
+    depends_on:
+      - auth-service
+      - model-service
+    ports:
+      - "5000:5000"
+    networks:
+      - teaguard_net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Frontend/Dockerfile
+    container_name: teaguard-frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:5000/api}
+    depends_on:
+      - api-gateway
+    ports:
+      - "5173:5173"
+    networks:
+      - teaguard_net
+
+volumes:
+  teaguard_mongo_data:
+
+networks:
+  teaguard_net:
