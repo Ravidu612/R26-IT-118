@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Intelligent Decision Support System for Sri Lankan Tea Estate Management
 
 ## 📌 Project Overview
@@ -225,3 +226,7 @@ This project aims to modernize Sri Lankan tea estate management using Artificial
 
 # 📄 License
 This project is developed for academic and research purposes at SLIIT.
+=======
+# tea-weather-intelligence
+AI-Based Weather Intelligence System for Sri Lankan Tea Estates
+>>>>>>> myrepo/main
