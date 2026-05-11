@@ -94,7 +94,7 @@ function TeaLeafDetectionPage() {
               <p>Confidence: {result.confidence ? `${(result.confidence * 100).toFixed(1)}%` : '-'}</p>
               <p>Class: {result.detectedClass || '-'}</p>
               <p>
-                Thresholds: Conf {result.thresholdsUsed?.confidence ?? 0.7} / IoU {result.thresholdsUsed?.iou ?? 0.7}
+                Thresholds: Conf {result.thresholdsUsed?.confidence ?? 0.5} / IoU {result.thresholdsUsed?.iou ?? 0.5}
               </p>
               <p>Recommendation: {result.detected ? 'Proceed to Tea Grade Classification.' : 'Upload a clearer tea leaf sample image.'}</p>
               <p>Bounding box count: {result.boundingBoxes?.length || 0}</p>

@@ -5,9 +5,29 @@ import AppError from '../utils/AppError.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const TASK_DATA_PATH = process.env.TASK_DATASET_PATH
-  ? path.resolve(process.env.TASK_DATASET_PATH)
-  : path.resolve(__dirname, '../data/teaEstateTasks.json')
+const SERVICE_ROOT = path.resolve(__dirname, '../..')
+const REPO_ROOT = path.resolve(SERVICE_ROOT, '../..')
+const DEFAULT_TASK_DATA_PATH = path.resolve(__dirname, '../data/teaEstateTasks.json')
+
+const getUniquePaths = (paths) => [...new Set(paths)]
+
+const resolveTaskDataPath = () => {
+  const configuredPath = process.env.TASK_DATASET_PATH?.trim()
+  if (!configuredPath) return DEFAULT_TASK_DATA_PATH
+
+  const candidates = path.isAbsolute(configuredPath)
+    ? [configuredPath, DEFAULT_TASK_DATA_PATH]
+    : [
+        path.resolve(process.cwd(), configuredPath),
+        path.resolve(SERVICE_ROOT, configuredPath),
+        path.resolve(REPO_ROOT, configuredPath),
+        DEFAULT_TASK_DATA_PATH,
+      ]
+
+  return getUniquePaths(candidates).find((candidate) => fs.existsSync(candidate)) || candidates[0]
+}
+
+const TASK_DATA_PATH = resolveTaskDataPath()
 
 let cachedTasks = null
 

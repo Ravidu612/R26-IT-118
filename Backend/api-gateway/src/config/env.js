@@ -15,7 +15,6 @@ const env = {
   authServiceUrl: process.env.AUTH_SERVICE_URL || 'http://localhost:5001',
   modelServiceUrl: process.env.MODEL_SERVICE_URL || 'http://localhost:5002',
   accessSecret: process.env.JWT_ACCESS_SECRET || '',
-  mongoUri: process.env.MONGODB_URI || '',
 }
 
 export default env
