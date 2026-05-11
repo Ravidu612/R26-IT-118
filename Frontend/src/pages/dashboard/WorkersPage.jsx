@@ -11,6 +11,8 @@ import PageHeader from '../../components/ui/PageHeader'
 import Select from '../../components/ui/Select'
 import { workerService } from '../../services/workerService'
 
+//Woker Page Update
+
 const workerRoles = ['Tea Field Worker', 'Sorting Operator', 'Factory Line Worker', 'Supervisor']
 const riskOptions = ['Low', 'Medium', 'High', 'Critical']
 const riskTone = { Low: 'success', Medium: 'warning', High: 'danger', Critical: 'danger' }
