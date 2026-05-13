@@ -224,9 +224,9 @@ Researcher: IT22279620 - Gunasekara G.N.D
 | Dataset Collection | 80% |
 | Frontend Development | 70% |
 | AI Model Training | 65% |
-| Backend APIs | 60% |
-| System Integration | 45% |
-| Testing | 30% |
+| Backend APIs | 70% |
+| System Integration | 65% |
+| Testing | 60% |
 
 ---
 
