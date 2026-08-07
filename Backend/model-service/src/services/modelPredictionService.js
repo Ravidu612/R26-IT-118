@@ -6,6 +6,7 @@ import { createWorkerHealthRecord } from '../repositories/workerHealthRepository
 import AppError from '../utils/AppError.js'
 import { callSpacePrediction, getSpaceStatus } from './huggingFaceSpaceClient.js'
 import { parseWorkerHealthRemoteResult } from './parsers/workerHealthParser.js'
+import { callWorkerHealthModel } from './workerHealthModelClient.js'
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 const raise = (error) => { throw error }
@@ -20,10 +21,10 @@ const buildProbabilityTable = (labels, peakIndex, confidence) => {
   return labels.map((label, index) => ({ label, probability: Number((index === peakIndex ? confidence : spread).toFixed(4)) }))
 }
 
-const runSpaceOrFallback = async ({ moduleType, config, payload, fallbackFactory, parseRemoteResult, allowFallbackOnRemoteError = false }) => {
+const runSpaceOrFallback = async ({ moduleType, config, payload, fallbackFactory, parseRemoteResult, allowFallbackOnRemoteError = false, request = callSpacePrediction }) => {
   if (!config.space) return allowFallbackOnRemoteError ? { requestStatus: 'placeholder', result: fallbackFactory('Space is not configured') } : raise(new AppError(`Model space is not configured for ${moduleType}`, 500))
   try {
-    const remote = await callSpacePrediction({
+    const remote = await request({
       space: config.space,
       token: config.token,
       apiUrl: config.apiUrl,
@@ -170,10 +171,22 @@ export const runTeaGradeClassification = async ({ imageBase64, fileName, mimeTyp
   return response.result
 }
 
-export const runWorkerHealthPrediction = async ({ readings, createdBy }) => {
-  const response = await runSpaceOrFallback({ moduleType: 'worker_health_risk', config: { ...env.spaces.workerHealth, apiUrl: env.spaces.workerHealth.apiUrl || `https://${env.spaces.workerHealth.space.replace('/', '-').replace(/_/g, '-').toLowerCase()}.hf.space/gradio_api/call/v2/predict_health_risk` }, payload: { v1Data: ['avg_hr', 'max_hr', 'min_hr', 'std_hr', 'avg_spo2', 'min_spo2', 'max_spo2', 'std_spo2', 'spo2_drop_count_95', 'spo2_drop_count_92', 'hr_slope', 'spo2_slope'].map((key) => readings[key]), v2Data: readings }, fallbackFactory: (message) => healthFallback(message, readings), parseRemoteResult: parseWorkerHealthRemoteResult, allowFallbackOnRemoteError: true })
-  await createWorkerHealthRecord({ readings, predictionResult: response.result, createdBy })
-  await createPrediction({ moduleType: 'worker_health_risk', inputPayload: readings, result: response.result, createdBy })
+export const runWorkerHealthPrediction = async ({ readings, signals, createdBy, source = 'manual', deviceId = null, workerName = null, workerId = null }) => {
+  const hasRawSignals = Boolean(signals?.ppg?.length && signals?.motion?.length)
+  const response = hasRawSignals
+    ? await runSpaceOrFallback({
+      moduleType: 'worker_health_risk',
+      config: env.spaces.workerHealth,
+      payload: { readings, signals },
+      request: ({ space, token, apiUrl, timeoutMs }) => callWorkerHealthModel({ config: { space, token, apiUrl }, readings, signals, timeoutMs }),
+      fallbackFactory: (message) => healthFallback(message, readings),
+      parseRemoteResult: parseWorkerHealthRemoteResult,
+      allowFallbackOnRemoteError: true,
+    })
+    : { requestStatus: 'placeholder', result: healthFallback('Raw HR, PPG, and motion samples are required for the fine-tuned HF model.', readings) }
+  const metadata = { source, deviceId, workerName, workerId }
+  await createWorkerHealthRecord({ readings, predictionResult: response.result, createdBy, ...metadata })
+  await createPrediction({ moduleType: 'worker_health_risk', inputPayload: { ...readings, ...metadata }, result: response.result, createdBy, ...metadata })
   return response.result
 }
 

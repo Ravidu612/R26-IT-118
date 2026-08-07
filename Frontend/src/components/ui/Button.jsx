@@ -3,9 +3,9 @@ import { cn } from '../../utils/cn'
 
 const variantStyles = {
   primary:
-    'bg-[var(--tea-green)] text-white hover:bg-[var(--tea-green-deep)] active:translate-y-px active:bg-emerald-800',
+    'bg-[var(--tea-green)] text-[#ffffff] hover:bg-[var(--tea-green-deep)] active:translate-y-px active:bg-emerald-800',
   secondary:
-    'bg-[var(--tea-teal)] text-white hover:bg-teal-700 active:translate-y-px active:bg-teal-800',
+    'bg-[var(--tea-teal)] text-[#ffffff] hover:bg-teal-700 active:translate-y-px active:bg-teal-800',
   outline:
     'border border-[var(--border-color)] bg-white/5 text-[var(--text-main)] hover:bg-white/10 active:translate-y-px',
   ghost: 'text-[var(--text-main)] hover:bg-white/10 active:translate-y-px',
@@ -35,7 +35,7 @@ function Button({
       type={type}
       disabled={isDisabled}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-150',
+        'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--soft-yellow)] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900',
         'disabled:cursor-not-allowed disabled:opacity-55',
         variantStyles[variant],

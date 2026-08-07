@@ -3,6 +3,7 @@ import express from 'express'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
+import iotRoutes from './routes/iotRoutes.js'
 import modelRoutes from './routes/modelRoutes.js'
 import predictionRoutes from './routes/predictionRoutes.js'
 import taskRoutes from './routes/taskRoutes.js'
@@ -19,6 +20,7 @@ app.get('/health', (_req, res) => {
 })
 
 app.use('/internal/models', modelRoutes)
+app.use('/internal/iot', iotRoutes)
 app.use('/internal/predictions', predictionRoutes)
 app.use('/internal/tasks', taskRoutes)
 

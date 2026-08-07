@@ -15,18 +15,46 @@ const parseConfidence = (value) => {
 
 const parseProbabilityTable = (tableLike) => {
   const rows = Array.isArray(tableLike?.data) ? tableLike.data : []
+  const isPercentage = Array.isArray(tableLike?.headers) && tableLike.headers.some((header) => String(header).includes('%'))
   return rows
     .map((row) => {
       const label = String(row?.[0] ?? '').trim()
       const probability = toNumber(row?.[1])
       if (!label || probability === null) return null
-      return { label, probability: Number(clamp(probability, 0, 1).toFixed(4)) }
+      const normalized = isPercentage ? probability / 100 : probability
+      return { label, probability: Number(clamp(normalized, 0, 1).toFixed(4)) }
     })
     .filter(Boolean)
 }
 
+const ACTIVITY_RISK = { AEROBIC: 'Low', ANAEROBIC: 'Medium', STRESS: 'High' }
+const ACTIVITY_SCORE = { AEROBIC: 80, ANAEROBIC: 55, STRESS: 35 }
+
+const parseActivityResult = (values) => {
+  const label = String(values[0] ?? '').trim().toUpperCase()
+  if (!label) return null
+  const probabilityTable = parseProbabilityTable(values[2])
+  const riskLevel = ACTIVITY_RISK[label] || 'Medium'
+  return {
+    predicted_state: label.toLowerCase(),
+    model_state: label,
+    confidence: parseConfidence(values[1]) ?? 0.65,
+    health_score: ACTIVITY_SCORE[label] || 55,
+    risk_level: riskLevel,
+    estimated_recovery_time: 'Not estimated by the activity/stress model',
+    next_day_recommendation: 'Use this session class with supervisor observations; it is not a medical diagnosis.',
+    medical_checkup: 'This model does not provide medical risk diagnoses.',
+    probability_table: probabilityTable,
+    model_type: 'activity_stress_session',
+    model_status: String(values[4] ?? '').trim(),
+    predictions: values[3] || null,
+  }
+}
+
 export const parseWorkerHealthRemoteResult = (raw) => {
-  const [predictedStateRaw, confidenceRaw, healthScoreRaw, riskLevelRaw, recoveryRaw, nextDayRaw, medicalRaw, probabilityRaw] = extractGradioOutputData(raw)
+  const values = extractGradioOutputData(raw)
+  if (values[2]?.data && values.length <= 5) return parseActivityResult(values)
+  const [predictedStateRaw, confidenceRaw, healthScoreRaw, riskLevelRaw, recoveryRaw, nextDayRaw, medicalRaw, probabilityRaw] = values
   const predictedState = String(predictedStateRaw ?? '').trim()
   if (!predictedState) return null
 

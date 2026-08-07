@@ -21,6 +21,7 @@ const env = {
   port: Number(process.env.PORT || 5001),
   nodeEnv: process.env.NODE_ENV || 'development',
   mongoUri: process.env.MONGODB_URI || '',
+  mongoServerSelectionTimeoutMs: Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000),
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   accessSecret: process.env.JWT_ACCESS_SECRET || '',
   refreshSecret: process.env.JWT_REFRESH_SECRET || '',

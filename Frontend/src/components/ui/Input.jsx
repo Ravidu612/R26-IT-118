@@ -23,7 +23,7 @@ function Input({
         placeholder={placeholder}
         aria-invalid={Boolean(error)}
         className={cn(
-          'w-full rounded-xl border border-[var(--border-color)] bg-slate-900/80 px-3 py-2.5 text-sm text-slate-100',
+          'w-full rounded-lg border border-[var(--border-color)] bg-slate-900/80 px-3 py-2.5 text-sm text-slate-100',
           'placeholder:text-slate-400 focus:border-[var(--tea-teal)] focus:outline-none focus:ring-2 focus:ring-[var(--tea-teal)]/35',
           error ? 'border-amber-400 focus:border-amber-400 focus:ring-amber-400/30' : '',
           className,

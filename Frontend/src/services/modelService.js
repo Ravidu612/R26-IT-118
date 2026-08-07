@@ -11,12 +11,20 @@ export const modelService = {
     const response = await apiClient.postForm('/models/tea-leaf-detect', toImageFormData(file))
     return response.data
   },
+  async detectTeaLeafDisease(file) {
+    const response = await apiClient.postForm('/models/tea-leaf-disease-detect', toImageFormData(file))
+    return response.data
+  },
   async classifyTeaGrade(file) {
     const response = await apiClient.postForm('/models/tea-grade-classify', toImageFormData(file))
     return response.data
   },
   async predictWorkerHealthRisk(payload) {
     const response = await apiClient.post('/models/worker-health-risk', payload)
+    return response.data
+  },
+  async analyzeLiveWorkerHealth(payload) {
+    const response = await apiClient.post('/iot/worker-health/analyze', payload)
     return response.data
   },
   async getModelStatus() {

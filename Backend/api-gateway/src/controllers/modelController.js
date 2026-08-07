@@ -35,6 +35,17 @@ export const teaGradeClassify = (req, res, next) => {
   }).catch(next)
 }
 
+export const teaLeafDiseaseDetect = (req, res, next) => {
+  const payload = getImagePayload(req)
+  forwardJson({
+    url: modelUrl('/tea-leaf-disease-detect'),
+    req,
+    res,
+    body: payload,
+    includeUserContext: true,
+  }).catch(next)
+}
+
 export const workerHealthRisk = (req, res, next) => {
   forwardJson({
     url: modelUrl('/worker-health-risk'),

@@ -16,7 +16,7 @@ function PageHeader({ title, description, action, showSearch = false, searchValu
               value={searchValue}
               onChange={(event) => onSearchChange?.(event.target.value)}
               placeholder="Search records..."
-              className="w-full rounded-xl border border-[var(--border-color)] bg-slate-900/80 py-2.5 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-400 focus:border-[var(--tea-teal)] focus:outline-none focus:ring-2 focus:ring-[var(--tea-teal)]/35"
+              className="w-full rounded-lg border border-[var(--border-color)] bg-slate-900/80 py-2.5 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-400 focus:border-[var(--tea-teal)] focus:outline-none focus:ring-2 focus:ring-[var(--tea-teal)]/35"
             />
           </label>
         ) : null}

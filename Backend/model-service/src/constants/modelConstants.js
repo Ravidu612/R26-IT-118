@@ -1,7 +1,7 @@
 export const TEA_GRADE_CLASSES = ['BM', 'BOP', 'BP', 'BROKEN_TEA', 'DUST', 'FANNING_2', 'PF', 'PW_DUST']
 export const TEA_LEAF_DETECTION_DEFAULTS = Object.freeze({
-  confidenceThreshold: 0.5,
-  iouThreshold: 0.5,
+  confidenceThreshold: 0.7,
+  iouThreshold: 0.7,
   imageSize: 640,
 })
 

@@ -2,9 +2,9 @@ import Button from './Button'
 
 function EmptyState({ icon: Icon, title, description, actionLabel, onAction }) {
   return (
-    <div className="rounded-2xl border border-dashed border-[var(--border-color)] bg-slate-900/45 p-8 text-center">
+    <div className="rounded-[12px] border border-dashed border-[var(--border-color)] bg-slate-900/45 p-8 text-center">
       {Icon ? (
-        <div className="mx-auto mb-3 inline-flex rounded-full bg-teal-300/15 p-3">
+        <div className="mx-auto mb-3 inline-flex rounded-lg border border-[var(--border-color)] bg-teal-300/15 p-3">
           <Icon className="h-5 w-5 text-teal-200" />
         </div>
       ) : null}

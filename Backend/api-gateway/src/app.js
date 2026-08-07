@@ -6,6 +6,7 @@ import morgan from 'morgan'
 import env from './config/env.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import authRoutes from './routes/authRoutes.js'
+import iotRoutes from './routes/iotRoutes.js'
 import modelRoutes from './routes/modelRoutes.js'
 import predictionRoutes from './routes/predictionRoutes.js'
 import taskRoutes from './routes/taskRoutes.js'
@@ -29,6 +30,7 @@ app.get('/health', (_req, res) => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/iot', iotRoutes)
 app.use('/api/models', modelRoutes)
 app.use('/api/predictions', predictionRoutes)
 app.use('/api/tasks', taskRoutes)

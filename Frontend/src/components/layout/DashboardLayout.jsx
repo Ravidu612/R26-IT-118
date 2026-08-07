@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import DashboardSidebar from '../dashboard/DashboardSidebar'
 import DashboardTopbar from '../dashboard/DashboardTopbar'
+import DashboardBackground from './DashboardBackground'
 import { authService } from '../../services/authService'
 import { modelService } from '../../services/modelService'
 
@@ -44,8 +45,9 @@ function DashboardLayout() {
   )
 
   return (
-    <div className="min-h-screen px-3 py-3 md:px-5">
-      <div className="flex gap-4">
+    <div className="dashboard-shell relative min-h-screen px-3 py-3 md:px-5 lg:px-7">
+      <DashboardBackground />
+      <div className="relative z-10 mx-auto flex max-w-[1600px] gap-5">
         <DashboardSidebar isMobileOpen={isMobileOpen} onClose={() => setIsMobileOpen(false)} />
         <section className="w-full min-w-0 space-y-4">
           <DashboardTopbar
