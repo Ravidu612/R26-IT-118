@@ -6,6 +6,7 @@ const predictionSchema = new mongoose.Schema(
     imageMeta: {
       fileName: String,
       mimeType: String,
+      base64: { type: String, default: null, select: false },
     },
     inputPayload: { type: Object, default: {} },
     result: { type: Object, required: true },

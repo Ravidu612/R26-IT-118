@@ -2,9 +2,11 @@ import { successResponse } from '../../../shared/src/utils/apiResponse.js'
 import AppError from '../utils/AppError.js'
 import { predictionHistoryService } from '../services/modelPredictionService.js'
 
-export const listPredictions = async (_req, res, next) => {
+export const listPredictions = async (req, res, next) => {
   try {
-    const data = await predictionHistoryService.getPredictions()
+    const allowedModules = ['tea_leaf_detection', 'tea_leaf_disease_detection', 'tea_grade_classification', 'worker_health_risk']
+    const moduleType = allowedModules.includes(req.query.moduleType) ? req.query.moduleType : null
+    const data = await predictionHistoryService.getPredictions({ includeImages: req.query.includeImages === 'true', moduleType })
     res.json(successResponse('Predictions fetched successfully', data))
   } catch (error) {
     next(error)

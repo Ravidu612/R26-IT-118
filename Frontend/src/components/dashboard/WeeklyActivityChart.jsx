@@ -1,22 +1,6 @@
 function WeeklyActivityChart({ data = [] }) {
   const maxValue = Math.max(1, ...data.map((item) => item.value))
-
-  return (
-    <div className="flex h-48 items-end gap-2 pt-4 sm:gap-4">
-      {data.map((item, index) => {
-        const height = Math.max(8, Math.round((item.value / maxValue) * 100))
-        const featured = index === Math.floor(data.length / 2)
-        return (
-          <div key={item.label} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
-            <div className="flex h-full w-full items-end justify-center">
-              <div className={`w-full max-w-9 rounded-t-md transition-all ${featured ? 'bg-[#185e3f]' : index % 2 ? 'bg-[#68bd91]' : 'bg-[#dce9df]'}`} style={{ height: `${height}%` }} title={`${item.value} activities`} />
-            </div>
-            <span className="text-[11px] font-medium text-[#8a968d]">{item.label}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
+  return <div className="relative mt-3 h-44 pl-8"><div className="absolute inset-x-0 top-0 grid h-[calc(100%-1.5rem)] grid-rows-5 text-[9px] text-[#8a968d]"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div><div className="absolute bottom-6 left-8 right-0 top-0 bg-[linear-gradient(to_bottom,transparent_0,transparent_24%,#e7eee9_25%,transparent_26%,transparent_49%,#e7eee9_50%,transparent_51%,transparent_74%,#e7eee9_75%,transparent_76%)]"><div className="flex h-full items-end gap-2 border-b border-[#dfe9e1] px-2 sm:gap-4">{data.map((item, index) => { const height = item.value ? Math.max(8, Math.round((item.value / maxValue) * 100)) : 2; const featured = index === data.length - 1; return <div key={item.label} className="flex h-full flex-1 items-end justify-center"><div className={`w-full max-w-8 rounded-t-md transition-all ${featured ? 'bg-[#087d47]' : index % 2 ? 'bg-[#69bb8c]' : 'bg-[#b8d5c1]'}`} style={{ height: `${height}%` }} title={`${item.value} activities`} /></div> })}</div></div><div className="absolute bottom-0 left-8 right-0 flex justify-between px-2 text-[10px] font-medium text-[#8a968d]">{data.map((item) => <span key={item.label}>{item.label}</span>)}</div></div>
 }
 
 export default WeeklyActivityChart

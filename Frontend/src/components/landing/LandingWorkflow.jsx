@@ -1,0 +1,10 @@
+import { ArrowRight, BarChart3, Cloud, Leaf, ScanLine } from 'lucide-react'
+import { Link } from 'react-router-dom'
+
+const workflowSteps = [{ icon: Leaf, label: 'Capture', text: 'Upload a tea sample' }, { icon: ScanLine, label: 'Analyze', text: 'AI checks leaf and grade' }, { icon: Cloud, label: 'Connect', text: 'Save insights securely' }, { icon: BarChart3, label: 'Improve', text: 'Act on clear results' }]
+
+function LandingWorkflow() {
+  return <section id="how-it-works" className="mx-auto mt-12 w-full max-w-[1500px] px-5 md:px-10"><div className="grid items-center gap-5 overflow-hidden rounded-3xl border border-[#dcebe0] bg-white p-6 shadow-[0_8px_25px_rgba(19,77,46,.05)] md:p-8 lg:grid-cols-[.8fr_1.45fr_.8fr]"><div><p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#16764d]">How it works</p><h2 className="mt-3 text-3xl font-extrabold leading-tight tracking-[-0.05em] text-[#123b28]">From leaf to decision.</h2><p className="mt-3 text-sm leading-6 text-[#63806f]">A simple workflow that keeps field teams, quality supervisors, and decision-makers aligned.</p><Link to="/register" className="mt-5 inline-flex items-center gap-2 text-xs font-extrabold text-[#16764d]">Start with TeaGuard <ArrowRight className="h-4 w-4" /></Link></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{workflowSteps.map(({ icon: Icon, label, text }, index) => <div key={label} className="relative rounded-2xl bg-[#f5faf6] p-4"><span className="grid h-10 w-10 place-items-center rounded-full bg-[#dff3e6] text-[#16764d]"><Icon className="h-5 w-5" /></span><p className="mt-3 text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#77a087]">0{index + 1}</p><p className="mt-1 text-sm font-extrabold text-[#254936]">{label}</p><p className="mt-1 text-[10px] leading-4 text-[#718979]">{text}</p></div>)}</div><img src="/assets/sri-lankan-tea-picker.png" alt="Tea picker collecting fresh leaves" className="h-56 w-full rounded-2xl object-cover lg:h-full" /></div></section>
+}
+
+export default LandingWorkflow

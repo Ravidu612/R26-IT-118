@@ -22,6 +22,7 @@ const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   mongoUri: process.env.MONGODB_URI || '',
   mongoServerSelectionTimeoutMs: Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000),
+  dnsServers: (process.env.DNS_SERVERS || '').split(',').map((server) => server.trim()).filter(Boolean),
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   accessSecret: process.env.JWT_ACCESS_SECRET || '',
   refreshSecret: process.env.JWT_REFRESH_SECRET || '',

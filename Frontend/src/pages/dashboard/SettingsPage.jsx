@@ -1,5 +1,6 @@
-import { Lock, RefreshCcw, Settings } from 'lucide-react'
+import { Lock, LogOut, RefreshCcw, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Alert from '../../components/ui/Alert'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -11,9 +12,11 @@ import { authService } from '../../services/authService'
 import { modelService } from '../../services/modelService'
 
 function SettingsPage() {
+  const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [status, setStatus] = useState(null)
   const [error, setError] = useState('')
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [form, setForm] = useState({ fullName: '', email: '' })
 
   const loadSettings = async () => {
@@ -25,6 +28,18 @@ function SettingsPage() {
       setStatus(modelStatus)
     } catch (apiError) {
       setError(apiError.message || 'Unable to load settings data')
+    }
+  }
+
+  const handleLogout = async () => {
+    if (!window.confirm('Are you sure you want to log out?')) return
+    setIsLoggingOut(true)
+    try {
+      await authService.logout()
+    } catch {
+      authService.clearAccessToken()
+    } finally {
+      navigate('/login', { replace: true })
     }
   }
 
@@ -70,10 +85,15 @@ function SettingsPage() {
               <Lock className="h-4 w-4 text-emerald-200" />
               Hugging Face tokens are stored server-side only.
             </p>
-            <p>Frontend does not expose API keys, tokens, or MongoDB secrets.</p>
-            <p>All model requests go through backend API routes only.</p>
-            <Button variant="outline" disabled>Rotate Keys (Backend Admin Only)</Button>
-          </div>
+              <p>Frontend does not expose API keys, tokens, or MongoDB secrets.</p>
+              <p>All model requests go through backend API routes only.</p>
+              <Button variant="outline" disabled>Rotate Keys (Backend Admin Only)</Button>
+              <div className="border-t border-[var(--border-color)] pt-3">
+                <Button icon={LogOut} variant="outline" className="border-rose-200 text-rose-700 hover:bg-rose-50" onClick={handleLogout} isLoading={isLoggingOut}>
+                  Log Out
+                </Button>
+              </div>
+            </div>
         </Card>
       </div>
     </div>

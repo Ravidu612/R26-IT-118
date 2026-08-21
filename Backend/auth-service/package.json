@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node src/index.js"
+    "start": "node --use-system-ca src/index.js",
+    "dev": "node --use-system-ca src/index.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

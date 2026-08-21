@@ -13,7 +13,7 @@ const app = express()
 app.use(helmet())
 app.use(cors({ origin: true, credentials: true }))
 app.use(morgan('dev'))
-app.use(express.json({ limit: '12mb' }))
+app.use(express.json({ limit: '20mb' }))
 
 app.get('/health', (_req, res) => {
   res.json({ success: true, message: 'model-service is running' })

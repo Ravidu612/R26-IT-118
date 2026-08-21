@@ -29,6 +29,7 @@ function AppRoutes() {
         }
       >
         <Route index element={<DashboardHome />} />
+        <Route path="overview" element={<DashboardHome />} />
         <Route path="tea-leaf-detection" element={<TeaLeafDetectionPage />} />
         <Route path="tea-grade-classification" element={<TeaGradeClassificationPage />} />
         <Route path="worker-health-risk" element={<WorkerHealthRiskPage />} />

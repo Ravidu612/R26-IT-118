@@ -14,6 +14,8 @@ const env = {
   port: Number(process.env.PORT || 5002),
   nodeEnv: process.env.NODE_ENV || 'development',
   mongoUri: process.env.MONGODB_URI || '',
+  mongoServerSelectionTimeoutMs: Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000),
+  dnsServers: (process.env.DNS_SERVERS || '').split(',').map((server) => server.trim()).filter(Boolean),
   requestTimeoutMs: Number(process.env.HF_REQUEST_TIMEOUT_MS || 30000),
   mqtt: {
     enabled: process.env.MQTT_ENABLED !== 'false',

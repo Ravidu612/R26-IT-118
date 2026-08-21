@@ -13,8 +13,8 @@ function Input({
 }) {
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="block text-sm font-medium text-slate-200">
-        {label} {required ? <span className="text-[var(--soft-yellow)]">*</span> : null}
+      <label htmlFor={id} className="block text-sm font-bold text-[#294b36]">
+        {label} {required ? <span className="text-[#16764d]">*</span> : null}
       </label>
       <input
         id={id}
@@ -23,14 +23,14 @@ function Input({
         placeholder={placeholder}
         aria-invalid={Boolean(error)}
         className={cn(
-          'w-full rounded-lg border border-[var(--border-color)] bg-slate-900/80 px-3 py-2.5 text-sm text-slate-100',
-          'placeholder:text-slate-400 focus:border-[var(--tea-teal)] focus:outline-none focus:ring-2 focus:ring-[var(--tea-teal)]/35',
-          error ? 'border-amber-400 focus:border-amber-400 focus:ring-amber-400/30' : '',
+          'w-full rounded-xl border border-[#d3e5d7] bg-[#fbfefc] px-3.5 py-3 text-sm text-[#1d3f2b] shadow-sm',
+          'placeholder:text-[#91a59a] focus:border-[#16764d] focus:outline-none focus:ring-2 focus:ring-[#16764d]/20',
+          error ? 'border-[#b66a5e] focus:border-[#b66a5e] focus:ring-[#b66a5e]/20' : '',
           className,
         )}
         {...props}
       />
-      {error ? <p className="text-xs text-amber-300">{error}</p> : helperText ? <p className="text-xs text-slate-400">{helperText}</p> : null}
+      {error ? <p className="text-xs text-[#a55247]">{error}</p> : helperText ? <p className="text-xs text-[#789080]">{helperText}</p> : null}
     </div>
   )
 }

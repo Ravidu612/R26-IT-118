@@ -144,28 +144,30 @@ const healthFallback = (message, readings) => {
 }
 
 export const runTeaLeafDetection = async ({ imageBase64, fileName, mimeType, createdBy }) => {
-  const imageMeta = { fileName, mimeType }
+  const imageMeta = { fileName, mimeType, base64: imageBase64 }
+  const resultImageMeta = { fileName, mimeType }
   const imageInput = { url: toDataUrl(imageBase64, mimeType), orig_name: fileName || 'upload.jpg', mime_type: mimeType || 'image/jpeg', is_stream: false, meta: { _type: 'gradio.FileData' } }
   const response = await runSpaceOrFallback({
     moduleType: 'tea_leaf_detection',
     config: env.spaces.teaLeafDetection,
     payload: [imageInput, TEA_LEAF_DETECTION_DEFAULTS.confidenceThreshold, TEA_LEAF_DETECTION_DEFAULTS.iouThreshold, TEA_LEAF_DETECTION_DEFAULTS.imageSize],
-    fallbackFactory: (message) => detectFallback(message, imageMeta),
-    parseRemoteResult: (raw) => parseTeaLeafRemoteResult(raw, imageMeta),
+    fallbackFactory: (message) => detectFallback(message, resultImageMeta),
+    parseRemoteResult: (raw) => parseTeaLeafRemoteResult(raw, resultImageMeta),
   })
   await createPrediction({ moduleType: 'tea_leaf_detection', imageMeta, result: response.result, createdBy })
   return response.result
 }
 
 export const runTeaGradeClassification = async ({ imageBase64, fileName, mimeType, createdBy }) => {
-  const imageMeta = { fileName, mimeType }
+  const imageMeta = { fileName, mimeType, base64: imageBase64 }
+  const resultImageMeta = { fileName, mimeType }
   const imageInput = { url: toDataUrl(imageBase64, mimeType), orig_name: fileName || 'upload.jpg', mime_type: mimeType || 'image/jpeg', is_stream: false, meta: { _type: 'gradio.FileData' } }
   const response = await runSpaceOrFallback({
     moduleType: 'tea_grade_classification',
     config: env.spaces.teaGrade,
     payload: [imageInput],
-    fallbackFactory: (message) => classifyFallback(message, imageMeta),
-    parseRemoteResult: (raw) => parseTeaGradeRemoteResult(raw, imageMeta),
+    fallbackFactory: (message) => classifyFallback(message, resultImageMeta),
+    parseRemoteResult: (raw) => parseTeaGradeRemoteResult(raw, resultImageMeta),
   })
   await createPrediction({ moduleType: 'tea_grade_classification', imageMeta, result: response.result, createdBy })
   return response.result

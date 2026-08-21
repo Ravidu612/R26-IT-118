@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import DashboardSidebar from '../dashboard/DashboardSidebar'
 import DashboardTopbar from '../dashboard/DashboardTopbar'
-import DashboardBackground from './DashboardBackground'
 import { authService } from '../../services/authService'
 import { modelService } from '../../services/modelService'
 
@@ -45,11 +44,10 @@ function DashboardLayout() {
   )
 
   return (
-    <div className="dashboard-shell relative min-h-screen px-3 py-3 md:px-5 lg:px-7">
-      <DashboardBackground />
-      <div className="relative z-10 mx-auto flex max-w-[1600px] gap-5">
+    <div className="dashboard-shell min-h-screen">
+      <div className="flex min-h-screen">
         <DashboardSidebar isMobileOpen={isMobileOpen} onClose={() => setIsMobileOpen(false)} />
-        <section className="w-full min-w-0 space-y-4">
+        <section className="dashboard-main w-full min-w-0">
           <DashboardTopbar
             onOpenMenu={() => setIsMobileOpen(true)}
             searchValue={searchText}
@@ -57,7 +55,7 @@ function DashboardLayout() {
             apiStatus={apiStatus}
             userRole={userRole}
           />
-          <Outlet context={outletContext} />
+          <main className="p-4 md:p-6 lg:p-7"><Outlet context={outletContext} /></main>
         </section>
       </div>
     </div>
