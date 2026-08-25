@@ -13,6 +13,13 @@ import TeaGradeClassificationPage from '../pages/dashboard/TeaGradeClassificatio
 import TeaLeafDetectionPage from '../pages/dashboard/TeaLeafDetectionPage'
 import WorkerHealthRiskPage from '../pages/dashboard/WorkerHealthRiskPage'
 import WorkersPage from '../pages/dashboard/WorkersPage'
+import WeatherDashboard from '../pages/dashboard/weather/Dashboard'
+import Forecasts from '../pages/dashboard/weather/Forecasts'
+import Predictions from '../pages/dashboard/weather/Predictions'
+import DiseaseRisk from '../pages/dashboard/weather/DiseaseRisk'
+import Alerts from '../pages/dashboard/weather/Alerts'
+import WeatherReports from '../pages/dashboard/weather/Reports'
+import WeatherLayout from '../pages/dashboard/weather/WeatherLayout'
 
 function AppRoutes() {
   return (
@@ -38,6 +45,14 @@ function AppRoutes() {
         <Route path="workers" element={<WorkersPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="weather" element={<WeatherLayout />}>
+          <Route index element={<WeatherDashboard />} />
+          <Route path="forecasts" element={<Forecasts />} />
+          <Route path="predictions" element={<Predictions />} />
+          <Route path="disease-risk" element={<DiseaseRisk />} />
+          <Route path="alerts" element={<Alerts />} />
+          <Route path="reports" element={<WeatherReports />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

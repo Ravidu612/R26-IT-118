@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  CloudSun,
   ClipboardCheck,
   FlaskConical,
   HeartPulse,
@@ -15,13 +16,13 @@ import { NavLink } from 'react-router-dom'
 import { dashboardNavItems } from '../../constants/navigation'
 import TeaGuardLogo from '../brand/TeaGuardLogo'
 
-const iconMap = { House, LayoutDashboard, ScanSearch, FlaskConical, HeartPulse, History, ClipboardCheck, Users, BarChart3, Settings }
+const iconMap = { House, LayoutDashboard, ScanSearch, FlaskConical, HeartPulse, History, ClipboardCheck, Users, BarChart3, Settings, CloudSun }
 
 function SidebarLinks({ onNavigate }) {
   const sections = [
     { label: '', items: dashboardNavItems.slice(0, 1) },
-    { label: 'Surveillance', items: dashboardNavItems.slice(1, 5) },
-    { label: 'Management', items: dashboardNavItems.slice(5) },
+    { label: 'Surveillance', items: dashboardNavItems.slice(1, 6) },
+    { label: 'Management', items: dashboardNavItems.slice(6) },
   ]
 
   const renderItem = (item) => {
