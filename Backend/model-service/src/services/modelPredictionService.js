@@ -1,10 +1,10 @@
 import { GRADE_DESCRIPTIONS, HEALTH_STATES, TEA_GRADE_CLASSES, TEA_LEAF_DETECTION_DEFAULTS } from '../constants/modelConstants.js'
 import env from '../config/env.js'
-import { createModelApiLog, getRecentModelApiLogs } from '../repositories/modelApiLogRepository.js'
+import { createModelApiLog } from '../repositories/modelApiLogRepository.js'
 import { createPrediction, deletePredictionById, getPredictionById, getPredictions } from '../repositories/predictionRepository.js'
 import { createWorkerHealthRecord } from '../repositories/workerHealthRepository.js'
 import AppError from '../utils/AppError.js'
-import { callSpacePrediction, getSpaceStatus } from './huggingFaceSpaceClient.js'
+import { callSpacePrediction } from './huggingFaceSpaceClient.js'
 import { parseWorkerHealthRemoteResult } from './parsers/workerHealthParser.js'
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
@@ -175,25 +175,6 @@ export const runWorkerHealthPrediction = async ({ readings, createdBy }) => {
   await createWorkerHealthRecord({ readings, predictionResult: response.result, createdBy })
   await createPrediction({ moduleType: 'worker_health_risk', inputPayload: readings, result: response.result, createdBy })
   return response.result
-}
-
-const safeSpaceStatus = async (moduleType, config) => {
-  try {
-    return await getSpaceStatus({ ...config, timeoutMs: env.requestTimeoutMs })
-  } catch (error) {
-    await createModelApiLog({ moduleType, space: config.space || 'unknown', requestStatus: 'error', latencyMs: 0, detail: { reason: error.message } })
-    return { space: config.space || 'unknown', runtime: 'unknown', error: error.message }
-  }
-}
-
-export const getModelStatusSummary = async () => {
-  const [teaLeaf, teaGrade, workerHealth, recentLogs] = await Promise.all([
-    safeSpaceStatus('tea_leaf_detection', env.spaces.teaLeafDetection),
-    safeSpaceStatus('tea_grade_classification', env.spaces.teaGrade),
-    safeSpaceStatus('worker_health_risk', env.spaces.workerHealth),
-    getRecentModelApiLogs(),
-  ])
-  return { teaLeaf, teaGrade, workerHealth, recentLogs }
 }
 
 export const predictionHistoryService = { getPredictions, getPredictionById, deletePredictionById }

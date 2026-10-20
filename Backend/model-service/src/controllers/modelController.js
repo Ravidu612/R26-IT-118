@@ -1,5 +1,11 @@
 import { successResponse } from '../../../shared/src/utils/apiResponse.js'
+<<<<<<< Updated upstream
 import { runTeaGradeClassification, runTeaLeafDetection, runWorkerHealthPrediction, getModelStatusSummary } from '../services/modelPredictionService.js'
+=======
+import { runTeaGradeClassification, runTeaLeafDetection, runWorkerHealthPrediction } from '../services/modelPredictionService.js'
+import { getModelStatusSummary } from '../services/modelStatusService.js'
+import { runTeaDiseaseDetection } from '../services/teaDiseasePredictionService.js'
+>>>>>>> Stashed changes
 import { normalizeHealthPayload, validateHealthPayload, validateImagePayload } from '../validators/modelValidators.js'
 
 const getCreatedBy = (req) => req.headers['x-user-id'] || null

@@ -5,7 +5,12 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
+<<<<<<< Updated upstream
     "dev": "node src/index.js"
+=======
+    "dev": "node src/index.js",
+    "test": "node --test"
+>>>>>>> Stashed changes
   },
   "dependencies": {
     "cors": "^2.8.5",
