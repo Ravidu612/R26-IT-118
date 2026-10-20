@@ -21,7 +21,7 @@ const taskDetail = (task) => [task?.taskId, task?.difficulty, task?.requiredSkil
 function TaskAssignmentPage() {
   const [tasks, setTasks] = useState([])
   const [workers, setWorkers] = useState([])
-  const [form, setForm] = useState({ workerName: '', preferredSkill: '', readings: defaultWorkerHealthValues })
+  const [form, setForm] = useState({ workerId: '', workerName: '', preferredSkill: '', readings: defaultWorkerHealthValues })
   const [recommendation, setRecommendation] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -36,6 +36,7 @@ function TaskAssignmentPage() {
           if (workerList[0]?.name) {
             setForm((current) => ({
               ...current,
+              workerId: current.workerId || workerList[0]._id || workerList[0].id || '',
               workerName: current.workerName || workerList[0].name,
               preferredSkill: current.preferredSkill || workerList[0].role || 'General',
             }))
@@ -55,7 +56,12 @@ function TaskAssignmentPage() {
   const handleWorkerSelect = (workerName) => {
     const selected = workerOptions.find((worker) => worker.name === workerName)
     setRecommendation(null)
-    setForm((current) => ({ ...current, workerName, preferredSkill: selected?.role || current.preferredSkill || 'General' }))
+    setForm((current) => ({
+      ...current,
+      workerId: selected?._id || selected?.id || '',
+      workerName,
+      preferredSkill: selected?.role || current.preferredSkill || 'General',
+    }))
   }
   const applyPreset = (presetName) => {
     setRecommendation(null)
@@ -66,7 +72,12 @@ function TaskAssignmentPage() {
     setForm((current) => ({ ...current, readings: { ...current.readings, [key]: Number(value) } }))
   }
 
-  const payload = { workerName: form.workerName, preferredSkill: form.preferredSkill || null, readings: form.readings }
+  const payload = {
+    workerId: form.workerId || null,
+    workerName: form.workerName,
+    preferredSkill: form.preferredSkill || null,
+    readings: form.readings,
+  }
 
   const requestRecommendation = async () => {
     setError('')

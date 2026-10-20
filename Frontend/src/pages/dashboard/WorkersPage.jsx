@@ -62,7 +62,7 @@ function WorkersPage() {
   const workerRows = useMemo(
     () =>
       workers.map((worker) => ({
-        id: worker.id,
+        id: worker._id || worker.id,
         worker: worker.name,
         role: worker.role,
         latestHr: worker.latestHr || 84,

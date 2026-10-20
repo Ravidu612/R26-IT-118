@@ -6,5 +6,8 @@ export const connectDb = async () => {
     throw new Error('MONGODB_URI is required')
   }
   await mongoose.connect(env.mongoUri)
+<<<<<<< Updated upstream
   console.log('MongoDB connected for Auth Service')
+=======
+>>>>>>> Stashed changes
 }

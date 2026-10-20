@@ -78,6 +78,7 @@ const getApprovalStatus = ({ recommendation, assignedByRole }) => {
 
 export const recommendTaskDecision = async ({
   workerName,
+  workerId,
   riskLevel,
   currentHeartRate,
   previousHeartRate,
@@ -91,7 +92,9 @@ export const recommendTaskDecision = async ({
   const activeTaskId = await getLatestTaskId(workerName, currentTaskId)
   const currentTask = activeTaskId ? findTaskById(tasks, activeTaskId) : null
   const shouldUseModel = !normalizeRiskLevel(riskLevel) && hasCompleteModelReadings(readings)
-  const modelPrediction = shouldUseModel ? await runWorkerHealthPrediction({ readings, createdBy: createdBy || null }) : null
+  const modelPrediction = shouldUseModel
+    ? await runWorkerHealthPrediction({ readings, createdBy: createdBy || null, workerName, workerId })
+    : null
   const vitals = getResolvedVitals({ readings, currentHeartRate, previousHeartRate, spo2 })
   const resolvedRisk = riskLevel || deriveRiskLevelFromPrediction(modelPrediction)
   const normalizedRisk = deriveRiskLevel({ explicitRisk: resolvedRisk, ...vitals })
@@ -114,6 +117,7 @@ export const recommendTaskDecision = async ({
   const healthState = getHealthStateForRisk(normalizedRisk, modelPrediction)
   const base = {
     workerName,
+    workerId,
     riskLevel: normalizedRisk,
     healthState,
     waitMinutes,
@@ -152,6 +156,7 @@ export const assignTaskDecision = async ({ payload, assignedBy, assignedByRole }
     : null
   const record = {
     workerName: recommendation.workerName,
+    workerId: recommendation.workerId || null,
     riskLevel: recommendation.riskLevel,
     suggestedTask: recommendation.suggestedTask,
     taskId: recommendation.primaryTask?.taskId || null,

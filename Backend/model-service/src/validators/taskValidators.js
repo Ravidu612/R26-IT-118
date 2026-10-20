@@ -14,6 +14,7 @@ const normalizeHealthReadings = (body) => {
 
 export const normalizeTaskPayload = (body) => ({
   workerName: String(body.workerName || 'Unknown Worker').trim(),
+  workerId: body.workerId ? String(body.workerId).trim() : null,
   riskLevel: body.risk_level || body.riskLevel || null,
   currentHeartRate: toNumberOrNull(body.currentHeartRate || body.current_heart_rate),
   previousHeartRate: toNumberOrNull(body.previousHeartRate || body.previous_heart_rate),

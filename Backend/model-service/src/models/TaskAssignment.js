@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 const taskAssignmentSchema = new mongoose.Schema(
   {
     workerName: { type: String, required: true },
+    workerId: { type: String, default: null },
     riskLevel: { type: String, required: true },
     suggestedTask: { type: String, required: true },
     taskId: { type: String, default: null },

@@ -6,6 +6,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import modelRoutes from './routes/modelRoutes.js'
 import predictionRoutes from './routes/predictionRoutes.js'
 import taskRoutes from './routes/taskRoutes.js'
+import workerRoutes from './routes/workerRoutes.js'
 
 const app = express()
 
@@ -21,6 +22,7 @@ app.get('/health', (_req, res) => {
 app.use('/internal/models', modelRoutes)
 app.use('/internal/predictions', predictionRoutes)
 app.use('/internal/tasks', taskRoutes)
+app.use('/internal/workers', workerRoutes)
 
 app.use(notFoundHandler)
 app.use(errorHandler)
