@@ -4,9 +4,12 @@ import {
   Tooltip, ResponsiveContainer,
 } from "recharts";
 import { getWeatherData, getWeatherHistory } from "../../../services/api";
-import { DISEASES, riskLabel } from "../../../utils/diseaseRisk";
+import { DISEASES, riskLabel, DISEASE_PROFILES } from "../../../utils/diseaseRisk";
 
 const REGIONS = ["Nuwara Eliya", "Kandy", "Ratnapura"];
+
+const HIGH_AT   = Math.round(DISEASE_PROFILES.levels.high_at * 100);   // 85
+const MEDIUM_AT = Math.round(DISEASE_PROFILES.levels.medium_at * 100); // 60
 
 const RISK_COLOR = {
   red:    { bar: "bg-red-400",    badge: "bg-red-100 text-red-700",      text: "text-red-600" },
@@ -159,17 +162,20 @@ export default function DiseaseRisk() {
     );
   }
 
-  // Build risk trend from history
-  const riskTrend = (histories[selectedRegion] || []).map(point => {
-    const fakeReading = {
-      humidity: point.humidity ?? 80,
-      temperature: { current: point.temp },
-      rainfall: point.rainfall ?? 0,
-    };
-    const entry = { time: point.time };
-    DISEASES.forEach(d => { entry[d.name] = d.calc(fakeReading); });
-    return entry;
-  });
+  // Risk trend from the real history. Points without a real temperature or humidity are skipped
+  // (no more assumed humidity 80 / rainfall 0).
+  const riskTrend = (histories[selectedRegion] || [])
+    .filter(point => typeof point.temp === "number" && typeof point.humidity === "number")
+    .map(point => {
+      const reading = {
+        humidity: point.humidity,
+        temperature: { current: point.temp },
+        rainfall: point.rainfall ?? 0,
+      };
+      const entry = { time: point.time };
+      DISEASES.forEach(d => { entry[d.name] = d.calc(reading); });
+      return entry;
+    });
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -179,6 +185,10 @@ export default function DiseaseRisk() {
         <h1 className="text-2xl font-medium text-green-900">Disease Risk Analysis</h1>
         <p className="text-sm text-green-600 mt-0.5">
           Real-time disease risk index for Sri Lankan tea estates — 6 diseases tracked
+        </p>
+        <p className="text-xs text-green-400 mt-1">
+          Index 20–100 = how closely the current temperature and humidity match each pathogen's favourable
+          conditions. High ≥ {HIGH_AT}, Medium ≥ {MEDIUM_AT}. It shows favourable weather, not a confirmed outbreak.
         </p>
       </div>
 
@@ -247,6 +257,7 @@ export default function DiseaseRisk() {
           const score = r ? disease.calc(r) : 0;
           const isExpanded = selectedDisease?.key === disease.key;
           const risk = riskLabel(score);
+          const assumed = String(disease.origin ?? "").startsWith("literature");
 
           return (
             <div
@@ -270,6 +281,11 @@ export default function DiseaseRisk() {
               <div className="p-4">
                 <RiskGauge name={disease.name} score={score} />
                 <p className="text-xs text-green-600 mt-3 mb-2">{disease.description}</p>
+                {assumed && (
+                  <p className="text-xs text-gray-400 mb-2">
+                    Literature-based window (not in the original dataset)
+                  </p>
+                )}
 
                 {/* Expandable conditions */}
                 <div

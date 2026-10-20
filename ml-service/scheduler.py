@@ -1,13 +1,17 @@
 import threading
 import time
+
 from trainer import train_all
 
+RETRAIN_EVERY_SECONDS = 24 * 60 * 60  # the CSV is static, so hourly retraining added nothing
+
+
 def start_scheduler():
-    thread = threading.Thread(target=_run, daemon=True)
-    thread.start()
+    threading.Thread(target=_run, daemon=True).start()
+
 
 def _run():
-    # Skip first run — already trained in app.py startup
+    # First training happens in app.py at startup.
     while True:
-        time.sleep(60 * 60)  # retrain every hour
+        time.sleep(RETRAIN_EVERY_SECONDS)
         train_all()

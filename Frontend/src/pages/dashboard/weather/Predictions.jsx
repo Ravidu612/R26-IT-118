@@ -4,56 +4,18 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from "recharts";
+import { riskLabel, DISEASE_PROFILES } from "../../../utils/diseaseRisk";
 
-// ─── Disease formulas (mirrored from diseaseRisk.js) ─────────────────────────
-function calcBlisterBlightRisk(humidity, tempC) {
-  let score = 0;
-  if (humidity > 80) score += 50; else if (humidity > 65) score += 25;
-  if (tempC >= 15 && tempC <= 25) score += 40; else if (tempC >= 10 && tempC <= 30) score += 20;
-  if (humidity > 90) score += 10;
-  return Math.min(score, 100);
-}
-function calcRedSpiderMiteRisk(humidity, tempC, rainfall) {
-  let score = 0;
-  if (tempC > 30) score += 45; else if (tempC > 26) score += 25;
-  if (humidity < 55) score += 35; else if (humidity < 70) score += 15;
-  if (rainfall < 1) score += 20;
-  return Math.min(score, 100);
-}
-function calcBrownBlightRisk(humidity, tempC, rainfall) {
-  let score = 0;
-  if (tempC >= 20 && tempC <= 30) score += 40; else if (tempC >= 18 && tempC <= 32) score += 20;
-  if (humidity > 75) score += 35; else if (humidity > 60) score += 15;
-  if (rainfall > 2) score += 25; else if (rainfall > 0.5) score += 10;
-  return Math.min(score, 100);
-}
-function calcGreyBlightRisk(humidity, tempC) {
-  let score = 0;
-  if (tempC >= 20 && tempC <= 28) score += 45; else if (tempC >= 16 && tempC <= 32) score += 20;
-  if (humidity > 80) score += 40; else if (humidity > 70) score += 20; else if (humidity > 60) score += 10;
-  if (humidity > 90 && tempC >= 20 && tempC <= 28) score += 15;
-  return Math.min(score, 100);
-}
-function calcShotHoleBorerRisk(humidity, tempC, rainfall) {
-  let score = 0;
-  if (tempC > 28) score += 40; else if (tempC > 24) score += 20;
-  if (humidity < 60) score += 35; else if (humidity < 70) score += 15;
-  if (rainfall < 0.5) score += 25; else if (rainfall < 2) score += 10;
-  return Math.min(score, 100);
-}
-function calcAlgalLeafSpotRisk(humidity, tempC, rainfall) {
-  let score = 0;
-  if (tempC >= 25 && tempC <= 35) score += 40; else if (tempC >= 20 && tempC <= 38) score += 20;
-  if (humidity > 85) score += 35; else if (humidity > 75) score += 15;
-  if (rainfall > 3) score += 25; else if (rainfall > 1) score += 10;
-  return Math.min(score, 100);
-}
+// ─── Shared scale (same cut-offs as the ML service and the alerts) ───────────
+const HIGH_AT   = Math.round(DISEASE_PROFILES.levels.high_at * 100);   // 85
+const MEDIUM_AT = Math.round(DISEASE_PROFILES.levels.medium_at * 100); // 60
 
-function riskLabel(score) {
-  if (score >= 65) return { label: "High", color: "red" };
-  if (score >= 35) return { label: "Medium", color: "yellow" };
-  return { label: "Low", color: "green" };
-}
+// Diseases whose windows come from literature, not from the original dataset
+const isAssumed = (name) =>
+  String(DISEASE_PROFILES.diseases[name]?.origin ?? "").startsWith("literature");
+
+// Score (0-100) the ML service predicted for one disease at one forecast hour
+const scoreAt = (p, name) => p.diseases?.[name]?.score ?? 0;
 
 // ─── Action recommendations ───────────────────────────────────────────────────
 const ACTIONS = {
@@ -127,18 +89,15 @@ const ACTIONS = {
   },
 };
 
-// ─── Disease definitions ──────────────────────────────────────────────────────
+// ─── Disease display info (scores themselves come from the ML service) ───────
 const DISEASES = [
-  { name: "Blister Blight",  emoji: "🍃", color: "#ef4444", calc: (h, t, r) => calcBlisterBlightRisk(h, t) },
-  { name: "Red Spider Mite", emoji: "🕷️", color: "#f97316", calc: (h, t, r) => calcRedSpiderMiteRisk(h, t, r) },
-  { name: "Brown Blight",    emoji: "🟫", color: "#92400e", calc: (h, t, r) => calcBrownBlightRisk(h, t, r) },
-  { name: "Grey Blight",     emoji: "🌫️", color: "#6b7280", calc: (h, t, r) => calcGreyBlightRisk(h, t) },
-  { name: "Shot-hole Borer", emoji: "🪲", color: "#7c3aed", calc: (h, t, r) => calcShotHoleBorerRisk(h, t, r) },
-  { name: "Algal Leaf Spot", emoji: "🔴", color: "#0ea5e9", calc: (h, t, r) => calcAlgalLeafSpotRisk(h, t, r) },
+  { name: "Blister Blight",  emoji: "🍃", color: "#ef4444" },
+  { name: "Red Spider Mite", emoji: "🕷️", color: "#f97316" },
+  { name: "Brown Blight",    emoji: "🟫", color: "#92400e" },
+  { name: "Grey Blight",     emoji: "🌫️", color: "#6b7280" },
+  { name: "Shot-hole Borer", emoji: "🪲", color: "#7c3aed" },
+  { name: "Algal Leaf Spot", emoji: "🔴", color: "#0ea5e9" },
 ];
-
-const ASSUMED_HUMIDITY = 75;
-const ASSUMED_RAINFALL  = 0.5;
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 const riskBorder  = { High: "border-red-300",    Medium: "border-yellow-300",    Low: "border-green-300" };
@@ -153,11 +112,11 @@ function ChartsModal({ predictions, onClose }) {
   const chartData = predictions.map((p) => {
     const row = {
       hour: `+${p.hour}h`,
-      Temperature: parseFloat(p.temperature.toFixed(1)),
-      "ML Risk %": Math.round(p.disease_risk * 100),
+      Temperature: parseFloat(Number(p.temperature).toFixed(1)),
+      "Top Disease Index": Math.round(p.disease_risk * 100),
     };
     DISEASES.forEach((d) => {
-      row[d.name] = d.calc(ASSUMED_HUMIDITY, p.temperature, ASSUMED_RAINFALL);
+      row[d.name] = scoreAt(p, d.name);
     });
     return row;
   });
@@ -189,7 +148,7 @@ function ChartsModal({ predictions, onClose }) {
         <div className="flex gap-2 px-6 pt-4 flex-wrap">
           {[
             { id: "temperature", label: "🌡️ Temperature" },
-            { id: "ml",          label: "🤖 ML Risk %" },
+            { id: "top",         label: "🤖 Highest Disease Index" },
             { id: "diseases",    label: "🦠 Disease Scores" },
           ].map((t) => (
             <button
@@ -211,7 +170,7 @@ function ChartsModal({ predictions, onClose }) {
 
           {activeTab === "temperature" && (
             <div>
-              <p className="text-xs text-gray-500 mb-3">Predicted temperature (°C) over next 8 hours</p>
+              <p className="text-xs text-gray-500 mb-3">Forecast temperature (°C) over next 8 hours</p>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0fdf4" />
@@ -228,33 +187,37 @@ function ChartsModal({ predictions, onClose }) {
             </div>
           )}
 
-          {activeTab === "ml" && (
+          {activeTab === "top" && (
             <div>
-              <p className="text-xs text-gray-500 mb-3">Combined ML disease risk % predicted by the model</p>
+              <p className="text-xs text-gray-500 mb-3">
+                Highest disease match index (0–100) predicted by the model at each hour
+              </p>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#fef9c3" />
                   <XAxis dataKey="hour" tick={{ fontSize: 12 }} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}%`} />
-                  <Tooltip formatter={(v) => [`${v}%`, "Disease Risk"]} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(v) => [`${v}/100`, "Top Disease Index"]} />
                   <Line
-                    type="monotone" dataKey="ML Risk %"
+                    type="monotone" dataKey="Top Disease Index"
                     stroke="#f59e0b" strokeWidth={2.5}
                     dot={{ r: 4, fill: "#f59e0b" }} activeDot={{ r: 6 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
-              <div className="flex gap-4 mt-3 text-xs text-gray-500 justify-center">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500 inline-block" />≥70% High</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-yellow-400 inline-block" />40–69% Medium</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-500 inline-block" />&lt;40% Low</span>
+              <div className="flex gap-4 mt-3 text-xs text-gray-500 justify-center flex-wrap">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500 inline-block" />≥{HIGH_AT} High</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-yellow-400 inline-block" />{MEDIUM_AT}–{HIGH_AT - 1} Medium</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-500 inline-block" />&lt;{MEDIUM_AT} Low</span>
               </div>
             </div>
           )}
 
           {activeTab === "diseases" && (
             <div>
-              <p className="text-xs text-gray-500 mb-3">Per-disease risk scores (0–100) across 8 hours</p>
+              <p className="text-xs text-gray-500 mb-3">
+                Per-disease index (20–100) from the ML models across 8 hours
+              </p>
               <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0fdf4" />
@@ -303,6 +266,7 @@ export default function Predictions() {
         const res = await getPredictions(selectedRegion);
         setData(res);
       } catch (e) {
+        setData(null);
         setError("Failed to load predictions. Is the ML service running?");
       } finally {
         setLoading(false);
@@ -313,22 +277,24 @@ export default function Predictions() {
 
   const predictions = data?.predictions ?? [];
 
+  // Hour where the single highest disease index occurs
   const peakHour = predictions.reduce(
     (best, p) => (p.disease_risk > best.disease_risk ? p : best),
-    { hour: 0, disease_risk: 0 }
+    { hour: 0, disease_risk: 0, top_disease: "" }
   );
   const peakPct = Math.round(peakHour.disease_risk * 100);
 
+  // Per-disease peak over the 8 hours, straight from the model output
   const diseasePeaks = DISEASES.map((d) => {
     let peakScore = 0, peakHourIdx = 0;
     predictions.forEach((p) => {
-      const score = d.calc(ASSUMED_HUMIDITY, p.temperature, ASSUMED_RAINFALL);
+      const score = scoreAt(p, d.name);
       if (score > peakScore) { peakScore = score; peakHourIdx = p.hour; }
     });
-    return { ...d, peakScore, peakHourIdx, risk: riskLabel(peakScore) };
+    return { ...d, peakScore, peakHourIdx, risk: riskLabel(peakScore), assumed: isAssumed(d.name) };
   });
 
-  const alertDiseases = diseasePeaks.filter((d) => d.peakScore >= 35);
+  const alertDiseases = diseasePeaks.filter((d) => d.peakScore >= MEDIUM_AT);
 
   const priorityActions = (() => {
     const actions = [], seen = new Set();
@@ -344,11 +310,17 @@ export default function Predictions() {
     return actions;
   })();
 
+  // Model accuracy (held-out hours) reported by the ML service
+  const r2Values = Object.values(data?.model_info?.metrics ?? {})
+    .map((m) => m.r2)
+    .filter((v) => typeof v === "number");
+  const avgR2 = r2Values.length ? r2Values.reduce((a, b) => a + b, 0) / r2Values.length : null;
+
   const bannerColor =
-    peakPct >= 70 ? "bg-red-50 border-red-300 text-red-800"
-    : peakPct >= 40 ? "bg-yellow-50 border-yellow-300 text-yellow-800"
+    peakPct >= HIGH_AT ? "bg-red-50 border-red-300 text-red-800"
+    : peakPct >= MEDIUM_AT ? "bg-yellow-50 border-yellow-300 text-yellow-800"
     : "bg-green-50 border-green-300 text-green-700";
-  const bannerIcon = peakPct >= 70 ? "🚨" : peakPct >= 40 ? "⚠️" : "✅";
+  const bannerIcon = peakPct >= HIGH_AT ? "🚨" : peakPct >= MEDIUM_AT ? "⚠️" : "✅";
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
@@ -418,12 +390,12 @@ export default function Predictions() {
             <span className="text-2xl leading-none">{bannerIcon}</span>
             <div>
               <p className="font-semibold text-base">
-                Peak disease risk expected at +{peakHour.hour}h ({peakPct}%)
+                Peak disease risk expected at +{peakHour.hour}h — {peakHour.top_disease} ({peakPct}/100)
               </p>
               <p className="text-sm mt-0.5 opacity-80">
-                {peakPct >= 70
+                {peakPct >= HIGH_AT
                   ? "Take preventive action before this window — conditions are highly favourable for disease spread."
-                  : peakPct >= 40
+                  : peakPct >= MEDIUM_AT
                   ? "Conditions are moderately risky. Stay alert and monitor field status closely."
                   : "Risk levels are low. Routine monitoring is sufficient."}
               </p>
@@ -437,7 +409,7 @@ export default function Predictions() {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {diseasePeaks.map((d) => {
-                const show = d.peakScore >= 35;
+                const show = d.peakScore >= MEDIUM_AT;
                 return (
                   <div
                     key={d.name}
@@ -456,15 +428,18 @@ export default function Predictions() {
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
                       <div
-                        className={`h-full rounded-full ${d.peakScore >= 65 ? "bg-red-500" : d.peakScore >= 35 ? "bg-yellow-400" : "bg-green-400"}`}
+                        className={`h-full rounded-full ${d.peakScore >= HIGH_AT ? "bg-red-500" : d.peakScore >= MEDIUM_AT ? "bg-yellow-400" : "bg-green-400"}`}
                         style={{ width: `${d.peakScore}%` }}
                       />
                     </div>
                     <div className="flex justify-between text-xs text-gray-500">
-                      <span>Peak score: <strong>{d.peakScore}</strong>/100</span>
+                      <span>Peak index: <strong>{d.peakScore}</strong>/100</span>
                       <span>at +{d.peakHourIdx}h</span>
                     </div>
-                    {!show && <p className="text-xs text-gray-400 mt-2">No action needed</p>}
+                    {d.assumed && (
+                      <p className="text-xs text-gray-400 mt-2">Literature-based window (not in original dataset)</p>
+                    )}
+                    {!show && <p className="text-xs text-gray-400 mt-1">No action needed</p>}
                   </div>
                 );
               })}
@@ -535,6 +510,14 @@ export default function Predictions() {
               </div>
             </div>
           )}
+
+          {/* How to read the index */}
+          <p className="text-xs text-gray-400 leading-relaxed">
+            The index (20–100) shows how closely the forecast temperature and humidity match each pathogen's
+            favourable conditions. High ≥ {HIGH_AT}, Medium ≥ {MEDIUM_AT}.
+            {avgR2 !== null && ` Models score R² ≈ ${avgR2.toFixed(4)} on held-out hours.`}
+            {" "}It indicates favourable weather, not a confirmed outbreak.
+          </p>
 
         </div>
       )}

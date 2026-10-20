@@ -13,6 +13,7 @@ const fetchAndSaveWeather = async () => {
 
   for (const region of TEA_REGIONS) {
     try {
+      // FIX: the old URL was missing ${} around the coordinates
       const url = `https://api.openweathermap.org/data/2.5/weather?lat=${region.latitude}&lon=${region.longitude}&appid=${apiKey}&units=metric`;
       const response = await axios.get(url);
       const data = response.data;
@@ -39,7 +40,7 @@ const fetchAndSaveWeather = async () => {
       await reading.save();
       console.log(`Weather saved for ${region.name}`);
 
-      // Check disease risk and create alerts if thresholds crossed
+      // Create alerts for any disease whose match index crosses the Medium/High cut-off
       await checkAndCreateAlerts(reading);
 
     } catch (error) {

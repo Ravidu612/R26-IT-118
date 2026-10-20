@@ -1,14 +1,25 @@
+import os
 import pandas as pd
 
-CSV_PATH = "data/weather_readings.csv"  # adjust path as needed
+HERE = os.path.dirname(os.path.abspath(__file__))
+# Absolute path: works no matter which folder the service is started from.
+CSV_PATH = os.path.join(HERE, "data", "weather_readings_extended.csv")
 
-def load_region_dataframe(region):
+REGIONS = ["Nuwara Eliya", "Kandy", "Ratnapura"]
+
+
+def load_training_frame():
+    """All regions x all 6 diseases. Target column: condition_match_score."""
     df = pd.read_csv(CSV_PATH)
-    df = df[df['location_name'] == region].copy()
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    df = df.sort_values('timestamp').reset_index(drop=True)
-    df = df.rename(columns={'temperature_current': 'temp'})
-    df['hour'] = df['timestamp'].dt.hour
-    # disease_risk is already in the CSV — no need to recompute it,
-    # but keep this if you still want the rule-based version for comparison
-    return df[['temp', 'humidity', 'rainfall', 'hour', 'disease_risk', 'timestamp']]
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
+    df = df.rename(columns={"temperature_current": "temp"})
+    return df.sort_values("timestamp").reset_index(drop=True)
+
+
+def weather_range():
+    """Temp/humidity range seen in training, used to flag out-of-range live inputs."""
+    df = load_training_frame()
+    return {
+        "temp": [float(df["temp"].min()), float(df["temp"].max())],
+        "humidity": [float(df["humidity"].min()), float(df["humidity"].max())],
+    }

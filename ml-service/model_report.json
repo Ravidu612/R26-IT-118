@@ -1,0 +1,79 @@
+{
+  "meta": {
+    "trained_at": "2026-10-20T11:13:45.315652+00:00",
+    "samples": 40176,
+    "train_rows": 0,
+    "test_rows": 0,
+    "split_at": "2026-08-05 09:00:00",
+    "range": {
+      "temp": [
+        5.0,
+        40.0
+      ],
+      "humidity": [
+        20.0,
+        100.0
+      ]
+    },
+    "dataset_range": {
+      "temp": [
+        10.0,
+        35.43
+      ],
+      "humidity": [
+        55.0,
+        98.0
+      ]
+    }
+  },
+  "diseases": {
+    "Blister Blight": {
+      "r2": 0.9998,
+      "mae": 0.0018,
+      "level_accuracy": 0.9933,
+      "origin": "fitted_from_dataset (Nuwara Eliya rows)",
+      "train_rows": 5358,
+      "test_rows": 1338
+    },
+    "Grey Blight": {
+      "r2": 0.9995,
+      "mae": 0.002,
+      "level_accuracy": 0.9918,
+      "origin": "fitted_from_dataset (Kandy rows)",
+      "train_rows": 5358,
+      "test_rows": 1338
+    },
+    "Brown Blight": {
+      "r2": 0.9997,
+      "mae": 0.0019,
+      "level_accuracy": 0.997,
+      "origin": "fitted_from_dataset (Ratnapura rows)",
+      "train_rows": 5358,
+      "test_rows": 1338
+    },
+    "Red Spider Mite": {
+      "r2": 0.9999,
+      "mae": 0.0017,
+      "level_accuracy": 0.994,
+      "origin": "literature_assumption - NOT in the original dataset, validate with an agronomist",
+      "train_rows": 5358,
+      "test_rows": 1338
+    },
+    "Shot-hole Borer": {
+      "r2": 0.9999,
+      "mae": 0.0017,
+      "level_accuracy": 0.9933,
+      "origin": "literature_assumption - NOT in the original dataset, validate with an agronomist",
+      "train_rows": 5358,
+      "test_rows": 1338
+    },
+    "Algal Leaf Spot": {
+      "r2": 0.9997,
+      "mae": 0.0017,
+      "level_accuracy": 0.9955,
+      "origin": "literature_assumption - NOT in the original dataset, validate with an agronomist",
+      "train_rows": 5358,
+      "test_rows": 1338
+    }
+  }
+}

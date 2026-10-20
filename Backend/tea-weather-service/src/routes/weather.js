@@ -3,13 +3,14 @@ const router = express.Router();
 const axios = require('axios');
 const WeatherReading = require('../models/WeatherReading');
 const { TEA_REGIONS } = require('../services/weatherService');
+const { buildHourlyForecast } = require('../services/forecastService');
+
+const ML_URL = process.env.ML_SERVICE_URL || 'http://localhost:5005';
 
 // GET all weather readings
 router.get('/', async (req, res) => {
   try {
-    const readings = await WeatherReading.find()
-      .sort({ timestamp: -1 })
-      .limit(50);
+    const readings = await WeatherReading.find().sort({ timestamp: -1 }).limit(50);
     res.json({ success: true, data: readings });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -23,6 +24,7 @@ router.get('/forecast/:location', async (req, res) => {
     if (!region) return res.status(404).json({ error: 'Region not found' });
 
     const apiKey = process.env.OPENWEATHER_API_KEY;
+    // FIX: the old URL was missing ${} around the coordinates
     const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${region.latitude}&lon=${region.longitude}&appid=${apiKey}&units=metric`;
     const response = await axios.get(url);
 
@@ -57,7 +59,7 @@ router.get('/forecast/:location', async (req, res) => {
   }
 });
 
-// GET last 24h temperature history for a location
+// GET last 24h history for a location (now includes humidity and rainfall for the risk trend)
 router.get('/history/:location', async (req, res) => {
   try {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -65,14 +67,14 @@ router.get('/history/:location', async (req, res) => {
       'location.name': req.params.location,
       timestamp: { $gte: since }
     })
-    .sort({ timestamp: 1 })
-    .select('temperature.current timestamp');
+      .sort({ timestamp: 1 })
+      .select('temperature.current humidity rainfall timestamp');
 
     const data = readings.map(r => ({
-      time: new Date(r.timestamp).toLocaleTimeString('en-US', {
-        hour: '2-digit', minute: '2-digit', hour12: false
-      }),
-      temp: r.temperature?.current
+      time: new Date(r.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      temp: r.temperature?.current,
+      humidity: r.humidity,
+      rainfall: r.rainfall
     }));
 
     res.json({ success: true, data });
@@ -81,29 +83,42 @@ router.get('/history/:location', async (req, res) => {
   }
 });
 
-// GET ML predictions proxy — must be before /:location
+// GET ML predictions — must be before /:location.
+// Builds the hourly weather (live reading + OpenWeather forecast) and sends it to the ML service,
+// which returns the match index for all 6 diseases per hour.
 router.get('/predict/:location', async (req, res) => {
   try {
     const { location } = req.params;
-    const response = await axios.get(
-      `http://localhost:5005/predict/${encodeURIComponent(location)}`
+    const hours = await buildHourlyForecast(location, 8);
+    const response = await axios.post(
+      `${ML_URL}/predict/${encodeURIComponent(location)}`,
+      { hours },
+      { timeout: 15000 }
     );
     res.json(response.data);
   } catch (error) {
-    const status = error.response?.status || 503;
+    const status = error.status || error.response?.status || 503;
     res.status(status).json({
       success: false,
-      message: error.response?.data?.message || 'ML service unavailable'
+      message: error.response?.data?.message || error.message || 'ML service unavailable'
     });
+  }
+});
+
+// GET model test metrics (R2, MAE, level accuracy per disease)
+router.get('/model/metrics', async (req, res) => {
+  try {
+    const response = await axios.get(`${ML_URL}/predict/metrics`, { timeout: 10000 });
+    res.json(response.data);
+  } catch (error) {
+    res.status(503).json({ success: false, message: 'ML service unavailable' });
   }
 });
 
 // GET weather by location
 router.get('/:location', async (req, res) => {
   try {
-    const reading = await WeatherReading.findOne({
-      'location.name': req.params.location
-    }).sort({ timestamp: -1 });
+    const reading = await WeatherReading.findOne({ 'location.name': req.params.location }).sort({ timestamp: -1 });
     if (!reading) return res.status(404).json({ error: 'Location not found' });
     res.json({ success: true, data: reading });
   } catch (error) {

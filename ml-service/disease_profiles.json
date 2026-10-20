@@ -1,0 +1,74 @@
+{
+  "match_rule": {
+    "description": "index = max(floor, 1 - min(cap, slope*dist_outside_temp_window) - min(cap, slope*dist_outside_humidity_window)). Recovered from condition_match_score in weather_readings_with_disease.csv (max error 0.0004, i.e. rounding).",
+    "slope_per_unit": 0.04,
+    "max_penalty_each": 0.6,
+    "floor": 0.2
+  },
+  "levels": {
+    "description": "Match-index cut-offs used for alerts and UI labels. Design choice, not taken from the CSV (the CSV's risk_category is a percentile cut on disease_risk).",
+    "high_at": 0.85,
+    "medium_at": 0.6
+  },
+  "risk_category_cuts": {
+    "description": "Percentile cut-offs of the original disease_risk column (25/50/25 split).",
+    "low_max": 10.74,
+    "high_min": 15.71
+  },
+  "diseases": {
+    "Blister Blight": {
+      "key": "blisterBlight",
+      "pathogen": "Exobasidium vexans",
+      "temp": [15, 24],
+      "humidity": [80, 95],
+      "origin": "fitted_from_dataset (Nuwara Eliya rows)",
+      "description": "Fungal disease of young tea shoots; thrives in cool, very humid, cloudy conditions.",
+      "conditions": "15-24 C and 80-95% humidity"
+    },
+    "Grey Blight": {
+      "key": "greyBlight",
+      "pathogen": "Pestalotiopsis spp.",
+      "temp": [20, 25],
+      "humidity": [75, 90],
+      "origin": "fitted_from_dataset (Kandy rows)",
+      "description": "Leaf-spot fungus of mature leaves; favoured by warm, humid weather.",
+      "conditions": "20-25 C and 75-90% humidity"
+    },
+    "Brown Blight": {
+      "key": "brownBlight",
+      "pathogen": "Colletotrichum / Glomerella spp.",
+      "temp": [25, 30],
+      "humidity": [80, 98],
+      "origin": "fitted_from_dataset (Ratnapura rows)",
+      "description": "Fungal leaf disease; favoured by warm, wet weather.",
+      "conditions": "25-30 C and 80-98% humidity"
+    },
+    "Red Spider Mite": {
+      "key": "redSpiderMite",
+      "pathogen": "Oligonychus coffeae",
+      "temp": [26, 32],
+      "humidity": [50, 70],
+      "origin": "literature_assumption - NOT in the original dataset, validate with an agronomist",
+      "description": "Mite pest that builds up in hot, dry spells.",
+      "conditions": "26-32 C and 50-70% humidity"
+    },
+    "Shot-hole Borer": {
+      "key": "shotHoleBorer",
+      "pathogen": "Euwallacea fornicatus",
+      "temp": [24, 30],
+      "humidity": [55, 75],
+      "origin": "literature_assumption - NOT in the original dataset, validate with an agronomist",
+      "description": "Stem-boring beetle; more active in warm, drier weather and on stressed bushes.",
+      "conditions": "24-30 C and 55-75% humidity"
+    },
+    "Algal Leaf Spot": {
+      "key": "algalLeafSpot",
+      "pathogen": "Cephaleuros parasiticus",
+      "temp": [25, 35],
+      "humidity": [85, 100],
+      "origin": "literature_assumption - NOT in the original dataset, validate with an agronomist",
+      "description": "Algal infection of leaves; favoured by warm, very humid, wet conditions.",
+      "conditions": "25-35 C and 85-100% humidity"
+    }
+  }
+}
